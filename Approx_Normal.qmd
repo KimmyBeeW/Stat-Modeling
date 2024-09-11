@@ -1,0 +1,431 @@
+---
+title: "Approximately Normal"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---2
+---
+
+## What is the probability model?
+
+### Consider estimating a proportion from a simple random sample without replacement
+
+Population size = N
+
+Population has M successes, N-M failures
+
+SRS without replacement of n and X = \# of successes
+
+X \~ Hypergeometric(n, M, N)
+
+### X \~ Hypergeometric(n = 5, M = 12, N = 20)
+
+```{r}
+# X ~ Hypergeometric(n = 5, M = 12, N = 20)
+plot(0 : 5, dhyper(0 : 5, 12, 20 - 12, 5), pch = 19,
+     xlab = "x", ylab = "pmf",
+     main = "Hypergeometric(n = 5, M = 12, N = 20)")
+```
+
+## Hypergeometric can be approximated by Binomial
+
+(large population and common events)
+
+![](x~hypergeometric-5-12-20.png){fig-align="left" width="451"}
+
+![](x~hypergeometric-5-60-100.png){width="452"}
+
+![](x~hypergeometric-5-120-200.png){width="451"}
+
+```{r}
+plot(0 : 5, dhyper(0 : 5, 12, 20 - 12, 5), pch = 19,
+     xlab = "x", ylab = "pmf",
+     main = "Hypergeometric(n = 5, M = 12, N = 20)")
+
+plot(0 : 5, dhyper(0 : 5, 60, 100 - 60, 5), pch = 19,
+     xlab = "x", ylab = "pmf",
+     main = "Hypergeometric(n = 5, M = 60, N = 100)")
+
+plot(0 : 5, dhyper(0 : 5, 120, 200 - 120, 5), pch = 19,
+     xlab = "x", ylab = "pmf",
+     main = "Hypergeometric(n = 5, M = 120, N = 200)")
+```
+
+## Details
+
+Typically we think of the Binomial as the data model for SRS with replacement
+
+-   Independence
+
+-   Constant P(success)
+
+Here we are replacing a “hard” computation with an “easier” one
+
+(Not saying “it doesn’t matter how we sample”)
+
+Note: this approximation can be done better because of the difference in variances
+
+### Approximating Binomial distribution with the Normal
+
+(seems wrong because Binomial is Discrete & Normal is Continuous)
+
+DeMoivre *The Doctrine of Chances: or, A Method of Calculating the Probabilities of Events in Play* (Said to have been prized by gamblers, and later applied this approximation to mortality in a paper “Annuities upon Lives”)
+
+In a second supplement that only appeared with certain editions of his book
+
+-   X \~ Binomial(n, 0.5)
+
+![](x~binomial-n-0.5.png){width="269" height="71"}
+
+-   if n is small, can compute binomial pmf
+
+## X \~ Binomial(10, 0.5)
+
+```{r}
+# DeMoivre Theory of Chances
+# X ~ Binomial(10, 0.5)
+n <- 10
+x <- 0 : n
+par(mfrow = c(2, 2))
+par(mar = c(4, 4, 1, 0.6)) 
+
+# pmf
+plot(x, dbinom(x, n, 0.5), pch = 19)
+
+plot(0, type = 'n', axes = FALSE, ann = FALSE)
+
+# cdf
+plot(x, pbinom(x, n, 0.5), pch = 19)
+lines(c(-1, 0), c(0, 0))
+for(i in 0 : n){
+  lines(c(i, i + 1), rep(pbinom(i, n, 0.5), 2))
+}
+
+# qf
+plot(0, 0, pch = 19,
+     xlim = c(0, 1), ylim = c(0, n), xlab = "u", ylab = "qbinom(u, n, 0.5)")
+points(pbinom(x, n, 0.5), x, pch = 19)
+lines(c(0, pbinom(0, n, 0.5)), c(0, 0))
+for(i in 0 : n){
+  lines(pbinom(i : (i + 1), n, 0.5), rep(i + 1, 2))
+}
+```
+
+## DeMoivre
+
+-   X \~ Binomial(n, 0.5)
+
+-   When n gets big the exact computation is slow
+
+![](DeMoivre-precurser.png){width="335"}
+
+DeMoivre noted that ![](DeMoivre.png){width="134"}
+
+Stirling determined that B = √(2π)
+
+## X \~ Binomial(25, 0.5)
+
+```{r}
+# DeMoivre 
+# X ~ Binomial(25, 0.5)
+n <- 25
+x <- 0 : n
+par(mfrow = c(2, 2))
+par(mar = c(4, 4, 1, 0.6)) 
+
+# pmf
+plot(x, dbinom(x, n, 0.5), pch = 19)
+lines(seq(0, n, length = 100) - 0.0,
+      dnorm(seq(0, n, length = 100), n * 0.5, sqrt(n * 0.5 * 0.5)),
+      lty = 2, lwd = 3, col = "red")
+
+plot(0,type='n',axes=FALSE,ann=FALSE)
+
+# cdf
+plot(x, pbinom(x, n, 0.5), pch = 19)
+lines(c(-1, 0), c(0, 0))
+for(i in 0 : n){
+  lines(c(i, i + 1), rep(pbinom(i, n, 0.5), 2))
+}
+lines(seq(0, n, length = 100) - 0.5,
+      pnorm(seq(0, n, length = 100), n * 0.5, sqrt(n * 0.5 * 0.5)),
+      lty = 2, lwd = 3, col = "red")
+
+# qf
+plot(0, 0, pch = 19,
+     xlim = c(0, 1), ylim = c(0, n), xlab = "u", ylab = "qbinom(u, n, 0.5)")
+points(pbinom(x, n, 0.5), x, pch = 19)
+lines(c(0, pbinom(0, n, 0.5)), c(0, 0))
+for(i in 0 : n){
+  lines(pbinom(i : (i + 1), n, 0.5), rep(i + 1, 2))
+}
+u <- seq(0.001, 0.9999, length = 100)
+lines(u, qnorm(u, n * 0.5, sqrt(n * 0.5 * 0.5)) - 0.5, lty = 2, lwd = 3, col = "red")
+```
+
+## Is it just the Binomial? Poisson(8)
+
+```{r}
+# Poisson(8)
+lambda <- 8
+
+x <- 0 : 15
+
+par(mfrow = c(2, 2))
+par(mar = c(4, 4, 1, 0.6)) 
+
+# pmf
+plot(x, dpois(x, lambda), pch = 19)
+lines(seq(0, 16, length = 100) - 0.5, 
+      dnorm(seq(0, 16, length = 100), lambda, sqrt(lambda)),
+      lty = 2, lwd = 3, col = "red")
+
+plot(0,type='n',axes=FALSE,ann=FALSE)
+
+# cdf
+plot(x, ppois(x, lambda), pch = 19)
+lines(c(-1, 0), c(0, 0))
+for(i in 0 : 14){
+  lines(c(i, i + 1), rep(ppois(i, lambda), 2))
+}
+lines(seq(0, 16, length = 100) - 0.5, 
+      pnorm(seq(0, 16, length = 100), lambda, sqrt(lambda)),
+      lty = 2, lwd = 3, col = "red")
+
+# qf
+plot(0, 0, pch = 19,
+     xlim = c(0, 1), ylim = c(0, 15), xlab = "u", ylab = "qpois(u, lambda)")
+points(ppois(x, lambda), x, pch = 19)
+lines(c(0, ppois(0, lambda)), c(0, 0))
+for(i in 0 : 14){
+  lines(ppois(i : (i + 1), lambda), rep(i + 1, 2))
+}
+u <- seq(0.001, 0.9999, length = 100)
+lines(u, qnorm(u, lambda, sqrt(lambda)) - 0.5, lty = 2, lwd = 3, col = "red")
+```
+
+### When is the approximation poor? X \~ Binomial(25, 0.1)
+
+```{r}
+# X ~ Binomial(25, 0.1)
+n <- 15
+
+x <- 0 : n
+
+par(mfrow = c(2, 2))
+par(mar = c(4, 4, 1, 0.6)) 
+
+# pmf
+plot(x, dbinom(x, n, 0.1), pch = 19,
+     xlim = c(-10, n))
+lines(seq(-10, n, length = 100) - 0.0,
+      dnorm(seq(-10, n, length = 100), n * 0.1, sqrt(n * 0.1 * 0.9)),
+      lty = 2, lwd = 3, col = "red")
+
+plot(0,type='n',axes=FALSE,ann=FALSE)
+
+# cdf
+plot(x, pbinom(x, n, 0.1), pch = 19,
+     xlim = c(-10, n), ylim = c(0, 1))
+lines(c(-1, 0), c(0, 0))
+for(i in 0 : n){
+  lines(c(i, i + 1), rep(pbinom(i, n, 0.1), 2))
+}
+lines(seq(-10, n, length = 100) - 0.5,
+      pnorm(seq(-10, n, length = 100), n * 0.1, sqrt(n * 0.1 * 0.9)),
+      lty = 2, lwd = 3, col = "red")
+
+# qf
+plot(0, 0, pch = 19,
+     xlim = c(0, 1), ylim = c(-10, n), xlab = "u", ylab = "qbinom(u, n, 0.5)")
+points(pbinom(x, n, 0.1), x, pch = 19)
+lines(c(0, pbinom(0, n, 0.1)), c(0, 0))
+for(i in 0 : n){
+  lines(pbinom(i : (i + 1), n, 0.1), rep(i + 1, 2))
+}
+u <- seq(0.001, 0.9999, length = 100)
+lines(u, qnorm(u, n * 0.1, sqrt(n * 0.1 * 0.9)) - 0.5, lty = 2, lwd = 3, col = "red")
+```
+
+Remember the intro stat rules for the proportion? np \> 10, n(1-p) \> 10
+
+## When should you not use “approximately normal” ?
+
+-   Binary response variable
+
+-   Skewed
+
+    -   Binomial w/ small P(success)
+
+    -   Poisson w/ small λ
+
+-   Rare Events and Small Sample Size
+
+-   Mixture of distributions:
+
+    -   Multimodal
+
+# Assessing Normality
+
+## Describing shapes of numerical distributions
+
+-   shape:
+
+    -   skewness: right-skewed, left-skewed, symmetric (skew is to the side of the longer tail)
+
+    -   modality: unimodal, bimodal, multimodal, uniform
+
+-   center: mean (`mean`), median (`median`), mode (not always useful)
+
+-   spread: range (`range`), standard deviation (`sd`), inter-quartile range (`IQR`)
+
+-   unusual observations
+
+## Focus on Adelie species Penguins
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+
+adelie <- penguins |>
+  filter(species == "Adelie") |>
+  na.omit()
+adelie
+```
+
+Histogram
+
+```{r}
+ggplot(adelie, aes(x = body_mass_g)) +
+  geom_histogram(aes(y = ..density..))
+```
+
+Base R
+
+```{r}
+hist(adelie$body_mass_g, freq = FALSE)
+```
+
+Density Plot
+
+```{r}
+ggplot(adelie, aes(x = body_mass_g)) +
+  geom_density()
+```
+
+Base R
+
+```{r}
+plot(density(adelie$body_mass_g), type = "l")
+```
+
+Box plot
+
+```{r}
+ggplot(data = adelie, aes(x = body_mass_g)) +
+  geom_boxplot()
+```
+
+Base R
+
+```{r}
+boxplot(adelie$body_mass_g)
+```
+
+QQ plot
+
+```{r}
+ggplot(data = adelie, aes(sample = body_mass_g)) +
+  geom_qq() +
+  geom_qq_line()
+```
+
+Base R
+
+```{r}
+qqnorm(adelie$body_mass_g)
+qqline(adelie$body_mass_g)
+```
+
+Overlay Normal pdf on Density plot
+
+```{r}
+ggplot(adelie, aes(x = body_mass_g)) +
+  geom_density(adjust = 0.9) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(adelie$body_mass_g),
+                            sd = sd(adelie$body_mass_g)),
+                col = "royalblue") +
+  xlim(2300, 5200) +
+  labs( 
+    x = "Body Mass (g)", 
+    y = "Density", 
+    title = "Adelie Penguins on Palmer Islands"
+  )
+```
+
+## Overlay Normal pdf on Density plot (Base R)
+
+```{r}
+plot(density(adelie$body_mass_g, adjust = 0.9), type = "l",
+     xlab = "Body Mass (g)", 
+     main = "Adelie Penguins on Palmer Islands")
+curve(dnorm(x, 
+            mean = mean(adelie$body_mass_g), 
+            sd = sd(adelie$body_mass_g)), 
+      col = "royalblue", add=TRUE)
+```
+
+## Normality Goodness of Fit Test
+
+Ho: Normally Distributed
+
+If we reject Ho (small p-value) then non-normal
+
+If we fail to reject (large p-value) then assume normality
+
+Evidence is not normal characteristics in comparison with cdf
+
+## Normality Goodness of Fit Test
+
+```{r}
+shapiro.test(adelie$body_mass_g)
+```
+
+Conclude Adelie penguin Body Mass is not approximately normal
+
+```{r}
+ks.test(adelie$body_mass_g, 
+        "pnorm", mean(adelie$body_mass_g), 
+                 sd(adelie$body_mass_g) )
+```
+
+Conclude Adelie penguin Body Mass is approximately normal
+
+Your Turn: Increase `n` until you can comfortably conclude normal!
+
+Does one of the graphics yield a smaller `n` ?
+
+## How large a sample size do you need to believe approximately normal?
+
+`rnorm` generates a sample of N(0, 1)
+
+```{r}
+n <- 500
+y <- rnorm(n)
+par(mfrow = c(2, 2))
+hist(y, freq = F)
+curve(dnorm(x, 
+            mean = mean(y), 
+            sd = sd(y)), 
+      col = "royalblue", add=TRUE)
+plot(density(y))
+curve(dnorm(x, 
+            mean = mean(y), 
+            sd = sd(y)), 
+      col = "royalblue", add=TRUE)
+boxplot(y)
+qqnorm(y)
+qqline(y)
+```

@@ -1,0 +1,77 @@
+# Stat 230 Intro
+
+Daily Pop Quiz - credit for reasonable answers
+
+Get an Intro stat book
+
+Statistics - learning from data and making decisions in the presence of uncertainty.
+
+Statistical thinking vehicles: ANOVA & Experimental Design
+
+## 121 review
+
+Variance –\> sd\^2 = ( SUM( xi - x_bar ) \^2 ) / n - 1
+
+SD problem
+
+```{r}
+print('potato')
+```
+
+```{r}
+print('hello')
+```
+
+```{r}
+measures1 <- c(rep(4,5), rep(6,10), rep(8,5))
+mean(measures1)
+var(measures1)
+sd(measures1)
+
+
+measures <- c(4,4,4,4,4,6,6,6,6,6,6,6,6,6,6,8,8,8,8,8)
+mean_meas <- sum(measures)/length(measures) # Calculate mean
+mean_meas
+var_meas <- (((-2)^2)*5 + (0^2)*10 + (2^2)*5)/19  # Calculate Variance by hand
+var_meas
+sqrt(var_meas)  # Calculate SD by hand
+```
+
+How to make a dataset
+
+```{r}
+# library(tidyverse)
+stat230 <- read_table('final
+                      92
+                      88
+                      96
+                      75
+                      99')
+stat230
+```
+
+```{r}
+t.test()
+```
+
+```{r}
+p_value <- 2 * pt(abs(2.3197), df = 29, lower.tail = FALSE)
+p_value
+
+t <- (5-4.5)/(2.87/sqrt(32))
+t
+p_value <- pt(abs(t), df = 31, lower.tail = FALSE)
+p_value
+```
+
+Pnorm for a Z score or Z stat. One sided z test.
+
+```{r}
+sig <- 3
+mu <- 68
+n <- 50
+x_bar <- 69.1
+z <- (x_bar - mu) / (sig/sqrt(n))
+1 - pnorm(z)
+pnorm(z, lower.tail = FALSE)
+```

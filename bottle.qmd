@@ -1,0 +1,150 @@
+---
+title: "stat230project"
+format: html
+editor: visual
+---
+
+## Flipping Water Bottles---STAT 230 Final Project
+
+```{r}
+#| include: false
+library(tidyverse)
+library(car)
+library(agricolae)
+library(DescTools)
+library(gmodels)
+library(multcomp)
+```
+
+Determine the number of replications needed for group.
+
+```{r}
+
+power.anova.test(groups = 8, n = NULL, between.var = var(c(0,0,0,0,0,0,0,0.3)), within.var = 0.2, sig.level = 0.05, power = 0.8)
+
+```
+
+Randomize the order in which we will apply the treatments to the experimental units for each group
+
+```{r}
+zack <- sample(x = 1:304, size = 304, replace = FALSE) |>
+  as.data.frame()
+zack
+
+dylan <- sample(x = 1:304, size = 304, replace = FALSE) |>
+  as.data.frame()
+dylan
+
+dallin <- sample(x = 1:304, size = 304, replace = FALSE) |>
+  as.data.frame()
+dallin
+
+kimmy <- sample(x = 1:304, size = 304, replace = FALSE) |>
+  as.data.frame()
+kimmy
+```
+
+```{r}
+#import data
+
+bottle <- read_csv("bottle.csv")
+bottle
+```
+
+```{r}
+bottle$trt <- as.factor(bottle$trt)
+aggregate(success ~ trt, data = bottle, FUN = mean)
+```
+
+```{r}
+
+bottle <- bottle |>
+  mutate(water_level = case_when(trt == "1" | trt == "5" ~ "quarter",
+                                 trt == "2" | trt == "6" ~ "half",
+                                 trt == "3" | trt == "7" ~ "three_quarter",
+                                 trt == "4" | trt == "8" ~ "full")) |>
+  mutate(brand = case_when(trt == "1" | trt == "2" | trt == "3" | trt == "4" ~ "fiji",
+                           trt == "5" | trt == "6" | trt == "7" | trt == "8" ~ "dasani"))
+
+bottle
+```
+
+```{r}
+
+aggregate(success ~ water_level, data = bottle, FUN = mean)
+aggregate(success ~ brand, data = bottle, FUN = mean)
+aggregate(success ~ block, data = bottle, FUN = mean)
+```
+
+```{r}
+boxplot(success ~ water_level, data=bottle)
+boxplot(success ~ brand, data=bottle)
+boxplot(success ~ block, data = bottle)
+```
+
+```{r}
+bottle.lm <- lm(success ~ water_level + brand, data = bottle)
+anova(bottle.lm) ## Balanced model with WingLength first
+
+bottle.lm <- lm(success ~ brand + water_level, data = bottle)
+anova(bottle.lm) ## Balanced model with BodyLength first
+
+bottle.lm <- lm(success ~ block + water_level + brand + water_level:brand, data = bottle)
+
+aov <- aov(bottle.lm)
+summary(aov)
+```
+
+```{r}
+TukeyHSD(aov, "water_level") ## Considers all pairs of means
+plot(TukeyHSD(aov, "water_level"))
+TukeyHSD(aov, "block")
+plot(TukeyHSD(aov, "block"))
+print(LSD.test(aov,"water_level")) ## Overall F + pairwise
+print(LSD.test(aov,"block"))
+ScheffeTest(aov) ## All possible contrasts (most conservative)
+pairwise.t.test(bottle$success, bottle$brand, p.adjust.method = "none")
+pairwise.t.test(bottle$success, bottle$water_level, p.adjust.method = "none")
+pairwise.t.test(bottle$success, bottle$block, p.adjust.method = "none")
+pairwise.t.test(bottle$success, bottle$water_level, p.adj='bonferroni') ## very conservative
+pairwise.t.test(bottle$success, bottle$block, p.adj='bonferroni')
+DunnettTest(x=bottle$success, g=bottle$water_level, control = "full") ## Dunnetts test
+```
+
+```{r}
+head(bottle)
+library(gmodels)
+bottle.lm.combo <- lm(success ~ trt, data = bottle)
+fit.contrast(bottle.lm.combo, "trt", 
+             rbind("brand"=c(1/3, 1/3, 1/3, -1/3, -1/3, -1/3)
+             ))
+fit.contrast(windmill.lm.combo, "trt",
+             rbind("water_level"=c(.5,-.5,0,.5,-.5,0,.5,-.5,0),
+                   "water_level"=c(0,.5,-.5,0,.5,-.5,0,.5,-.5)
+             ),
+             conf=0.95 )
+
+bottle.lm <- lm(success ~ water_level + brand, data = bottle)
+anova(bottle.lm) ## Here is what the ANOVA results look like.
+## Note the similarities among the contrast tests with the main effect tests from the anova function
+```
+
+```{r}
+library(multcomp)
+bottle.glht <- glht(bottle.lm.combo, 
+                  linfct = mcp(trt = c(1/3, 1/3, 1/3, -1/3, -1/3, -1/3)))
+summary(bottle.glht, test = adjusted("none")) ## potential adjustments include bonferroni, holm, others 
+
+cmtx <- matrix(c(.5,-.5,0,.5,-.5,0,.5,-.5,0,0,.5,-.5,0,.5,-.5,0,.5,-.5), ncol=6, byrow=TRUE)
+##print(cmtx)
+##colnames(cmtx) <- c("A1 vs. A2/A3", "A2 vs. A1/A3", "A3 vs. A1/A2")
+contrast <- glht(bottle.lm.combo, linfct = mcp(trt = cmtx))
+summary(contrast, test = adjusted("none")) ## This is another approach to calculating contrasts. It automatically includes an adjusted p-value for multiple tests.
+```
+
+```{r}
+#emmeans
+library(emmeans)
+emmeans()
+pairs()
+```

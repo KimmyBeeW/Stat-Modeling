@@ -1,0 +1,126 @@
+---
+title: "Stat 230 HW#11"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+## Numbers 74-75, 78-83, 86
+
+```{r, message=FALSE}
+library(tidyverse)
+library(car)
+library(ggplot2)
+library(DescTools)
+```
+
+## 74
+
+Suppose the sponge study (Example 4.10) had used three sponges of each color. Suppose also that you measured several cells from each part (tip and base) of each sponge and used the average of these measurements as your response. Then your study would have the structure of an SP/RM design.
+
+a\. What are the whole plots, that is,what is the nuisance factor?
+
+**the sponge**
+
+b\. What is the between-blocks factor? Is it observational or experimental?
+
+**color or sponge; observational**
+
+c\. What is the within-blocks factor? Is it observational or experimental?
+
+**sampling location on the sponge (tip or base); observational**
+
+e\. Write the factor diagram.
+
+**df for sponge = 2 for color + 2 for location = 4**
+
+**df for interaction = \# of individual subplots = white top + white bottom + green top + green bottom = 2 for color \* 2 for location = 4**
+
+![](Decomp_Table.png){fig-align="center"}
+
+## 75
+
+```{r}
+auxin <- read_csv("../data/auxin.csv", show_col_types = FALSE) %>%
+  mutate(auxin = as.factor(auxin)) %>%
+  mutate(deblading = as.factor(deblading)) %>%
+  mutate(plant = as.factor(plant))
+auxin
+```
+
+```{r}
+model1 <- aov(days ~ auxin + Error(plant) + deblading + auxin:deblading, data = auxin)
+summary(model1)
+```
+
+```{r}
+# Plotting means for fun / visualization
+means_plot <- auxin %>%
+  group_by(auxin, deblading) %>%
+  summarise(mean_days = mean(days, na.rm = TRUE), .groups = "drop") %>%
+  ggplot(aes(x = auxin, y = mean_days, fill = deblading)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Mean Days by Auxin and Deblading",
+       x = "Auxin", y = "Mean Days",
+       fill = "Deblading") +
+  theme_minimal()
+print(means_plot)
+```
+
+| Source           | df  | SS  | MS  | F-ratio | p-val |
+|------------------|-----|-----|-----|---------|-------|
+| mean             | 1   |     |     |         |       |
+| auxin            | 3   |     |     |         |       |
+| plant(auxin)     | 12  |     |     |         |       |
+| deblading        | 1   |     |     |         |       |
+| auxin\*deblading | 3   |     |     |         |       |
+| residual         | 12  |     |     |         |       |
+| total            | 32  |     |     |         |       |
+
+: ANOVA for auxin data
+
+## 78
+
+## 79
+
+## 80
+
+## 81
+
+## 82
+
+## 83
+
+# Number 86
+
+Among the apps that are most popular (more than 500 ratings), are the following significant predictors of the user rating:\
+- the genre of the app (consider only the top 8 genres) - the size of the app (small, med, or large) - version level (current version vs. past versions) In addition to each of the 3 main effects above, consider all 3 of the two-way interactions and the three-way interaction. Use the following definition for appsize: small=less than 50,000,000 bytes (50 megabytes), med=between 50,000,000 and 100,000,000 bytes, and large= greater than 100,000,000 bytes
+
+```{r}
+apps <- read_csv("../data/AppleStore.csv")
+apps
+```
+
+```{r}
+appsversion <- apps %>%
+  filter(rating_count_tot > 500) %>%
+  pivot_longer(c(user_rating,user_rating_ver),names_to="version",values_to="rating") %>%
+  add_count(prime_genre,name="nn") %>%    
+  filter(dense_rank(-nn) <= 8) %>%
+  mutate(id=as_factor(id)) %>%
+  mutate(appsize=cut(size_bytes,  
+                        breaks=c(0,5e+07,1e+08,Inf),right=FALSE, 
+                        labels=c("small","med","large"))) %>%
+  dplyr::select(id,rating,version,prime_genre,appsize)
+
+## RM[2,1] rating ~ genre + appsize + version
+appsversion.aov <- aov(rating ~ prime_genre + appsize + prime_genre:appsize +
+                        Error(id) + version + version:prime_genre + version:appsize + version:prime_genre:appsize, data=appsversion)
+options(digits = 5)
+summary(appsversion.aov)
+```
+
+```{r}
+appsversion
+```

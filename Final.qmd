@@ -1,0 +1,36 @@
+---
+title: "Final Key Winter 2024"
+---
+
+```{r}
+library(tidyverse)
+pulsedat <- read_csv("https://tofu.byu.edu/stat230/pulsedat.csv", show_col_types = FALSE) |>
+  mutate(across(c("time","diet","id"),factor))
+pulsedat
+```
+
+```{r}
+pulsedat.aov <- aov(pulse ~ diet + Error(id) + time + diet:time, data=pulsedat)
+summary(pulsedat.aov)
+```
+
+3.  difference between two diets is NOT SIGNIFICANT diet is 0.0869 \> 0.05
+4.  NOT significant evidence to reject the default theory diet:time is 0.339 \> 0.05 Insufficient evidence to conclude that there is an interaction.
+
+## Common WRONG answers
+
+```{r}
+pulse.CB2 <- lm(pulse ~ id + diet + time + diet:time, data=pulsedat)
+anova(pulse.CB2) # note that diet doesn't make it into the ANOVA table since id "soaks up" all the info about diet
+```
+
+3.  difference between two diets is inconclusive: diet soaked up by id.
+4.  NOT significant evidence to reject the default theory diet:time is 0.3394 \> 0.05 Insufficient evidence to conclude that there is an interaction.
+
+```{r}
+pulse.BF2 <- lm(pulse ~ diet + time + diet:time, data=pulsedat)
+anova(pulse.BF2)
+```
+
+3.  difference between two diets IS significant. diet is 0.01214 \> 0.05
+4.  NOT significant evidence to reject the default theory diet:time is 0.60703 \> 0.05 Insufficient evidence to conclude that there is an interaction.

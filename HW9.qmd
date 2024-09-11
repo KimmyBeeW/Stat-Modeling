@@ -1,0 +1,302 @@
+---
+title: "Stat 230 HW#9"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+# Problems #84f, 62-69
+
+Load libraries:
+
+```{r, message=FALSE}
+library(tidyverse)
+library(car) # So we can calculate Type II and Type III sums of squares
+library(DescTools)
+library(MASS) # needed to make a function
+```
+
+## 84f
+
+f\) Re-do the analysis, this time assuming that instead of looking at all the pairwise comparisons, you only want to consider 3 different contrasts: (i) mean of the pickups&vans&minivans minus the mean of the other 4 car types, (ii) mean of the heavy&medium cars minus the mean of the light&compact cars, and (iii) mean of minivans minus mean of compact cars. If we want to ensure that the family-wise error rate is no greater than 0.05, which multiple-comparison approach is most appropriate? Use your chosen approach and interpret the 3 contrasts described—which contrasts are statistically significant? Be sure to explain (1) why you are or are not adjusting the p-values for the tests of the three contrasts, and (2) how you are using the p-values to assess the significance of each contrast.
+
+```{r}
+# way to read in downloaded data
+headinjury <- read_csv('../data/headinjury.csv', show_col_types = FALSE) %>%
+  mutate(Type = as.factor(Type))
+summary(headinjury)
+headinjury
+```
+
+```{r}
+#Dr. C's northog func from section5.R using library MASS
+nonorthogcontrasts <- function(X)  
+{
+  temp <- cbind(rep(1,nrow(X)),X)
+  newcontrasts <- t(ginv(temp))[,-1]
+  colnames(newcontrasts) <- colnames(X) 
+  return(newcontrasts)
+}
+```
+
+```{r}
+mycontrasts <- cbind(c(-.25,-.25,-.25,-.25,1/3,1/3,1/3),
+                              c(-.5,.5,-.5,.5,0,0,0),
+                              c(-1, 0,0,0, 1,0,0))
+colnames(mycontrasts) <-
+  c("trucks/vans - cars", "heavy/med - light/compact", "minivan - compact")
+
+contrasts(headinjury$Type) <- nonorthogcontrasts(mycontrasts)   # because row two and three are not orthoginal
+
+colnames(contrasts(headinjury$Type)) <-
+  c("trucks/vans - cars", "heavy/med - light/compact", "minivan - compact","junk4","junk5","junk6")
+
+
+
+#anova(lm(HeadInjury~Type,data=headinjury))
+summary(lm(HeadInjury~Type,data=headinjury))$coefficients[2:4, ]
+
+# multiply each of the 3 p-values by 3 because we are using 3 nonorthogonal contrasts,
+#   then compare to alpha
+```
+
+Bonferroni is the best approach.
+
+\(i\) mean of the trucks&vans&minivans minus the mean of the other 4 car types is significant, so there is a difference between those cars.
+
+```{r}
+0.000677*3
+0.05/3
+```
+
+0.002 is smaller than a = 0.05, and 0.000677 is smaller than a = 0.0166666667
+
+\(ii\) mean of the heavy&medium cars minus the mean of the light&compact cars is not significant, so there is not a difference between those cars.
+
+```{r}
+0.031844*3
+```
+
+0.095532 is greater than a = 0.05
+
+\(iii\) mean of minivans minus mean of compact cars is not significant, so there is not a difference between those cars.
+
+## 62
+
+For this problem, you will conduct an analysis of the BF\[2\] data you gathered in your catapult experiment.
+
+\(a\) Give the ANOVA table (using R). Give your code and your output.
+
+Example Code:
+
+```{r}
+catapult_junk <- read_table("
+num_rubber_bands angle_ratio distance
+1 5.4 67
+1 5.2 58
+1 6.1 70
+1 4.8 50
+1 5.0 65
+1 5.7 66
+1 6.0 60
+1 4.0 50
+1 5.7 50
+1 5.6 58
+1 5.8 64
+1 5.3 60
+2 5.0 65
+2 4.8 56
+2 3.9 50
+2 4.0 58
+2 5.6 62
+2 6.0 60
+2 5.2 60
+2 5.3 64
+2 5.9 60
+2 6.1 62
+2 6.2 60
+2 5.1 48
+3 4.8 70
+3 5.4 64
+3 4.9 65
+3 5.7 64
+3 4.2 63
+3 6.0 64
+3 5.1 65
+3 4.8 57
+3 5.3 66
+3 4.6 56
+3 4.5 59
+3 4.4 55
+") %>%
+  mutate(num_rubber_bands = as.factor(num_rubber_bands))
+```
+
+```{r}
+anova(lm(distance ~ num_rubber_bands + angle_ratio + num_rubber_bands:angle_ratio, data=catapult_junk))
+```
+
+\(b\) List the three null hypotheses for your experiment. For each hypothesis, write a conclusion for your test of the hypothesis. (Make sure your statement for each hypothesis references the p-value and clearly states the conclusion in context.) Additionally, discuss the practical importance of each of the main effects and the interaction by calculating the partial η2 for each factor and the η2 for the model (as in slides 3.31-3.32 in the Section 3 lecture notes).
+
+1.  Ho = The number of rubber bands has no impact on the distance
+    -   fail to reject the null because the p-value is 0.222 and conclude that there is not sufficient evidence to prove that there is a signficant impact of the number of rubber_bands on the distance
+2.  Ho = The angle ratio has no impact on the distance
+    -   reject the null hypothesis because the p-val is 0.0036 and conclude that angle ratio has a significant impact on the distance
+3.  Ho = The interaction between the number of rubber bands and the angle ratio has no impact on the distance
+    -   fail to reject the null
+
+\(c\) Write a short paragraph about what learned about running an experiment that you think will be helpful to you as you do your term project experiment.
+
+\*\*insert paragraph about something you learned
+
+## 63
+
+In an effort to improve the sleep quality of subjects having trouble sleeping, one of 2 sleep devices and one of 4 drugs is assigned to each subject in a study. The sleep quality scores for each of the 24 subjects are given below. Do a data decomposition and create an ANOVA table by HAND or in Excel. Then check your work by running the analysis in R using the file BF2practice.csv. You’ll want to wrangle the data into shape to run the analysis in R. (Think about the pivot longer() function \[formerly called the gather() function\]...see Wrangling.R on the example code given for #58 above for examples.)
+
+The data are as follows:
+
+```{r}
+bf2pre <- read_csv("/Users/kimberlywilliams/Documents/BYU_Wint24/Stat230TA/data/BF2practice.csv")
+bf2pre
+```
+
+```{r}
+bf2 <- bf2pre %>% gather(A,B,C,D,key="drug",value="score")
+bf2$drug <- as.factor(bf2$drug)
+bf2$device <- as.factor(bf2$device)
+bf2
+
+newdat <- bf2pre %>% pivot_longer(c(A,B,C,D),names_to="drug",values_to="score")
+newdat$drug <- as.factor(newdat$drug)
+newdat$device <- as.factor(newdat$device)
+newdat
+```
+
+Anova
+
+```{r}
+anova(lm(score ~ drug + device + drug:device, data=bf2))
+```
+
+mean(c(155,173))\[1\] 164\> 164-(164.883+29.667-8.583)\[1\] -21.967\> 164.883-29.667+8.583+21.987+155\[1\] 320.786\> 164.883-(29.667-8.583-21.987+155)\[1\] 10.786\> 164.883-(29.667-8.583-21.917+155)\[1\] 10.716\> 164.883-(29.667-8.583-21.967+155)\[1\] 10.766\> 164.883-(29.667-8.583-21.967+155)\[1\] 10.766\> 164.883+(29.667-8.583-21.967-9)\[1\] 155\> 155-164.883+(29.667-8.583-21.967)\[1\] -10.766\> 155-(164.883+(29.667-8.583-21.967))\[1\] -9\> 155-(164.883+(29.667-8.583-21.967))\[1\] -9\> 747.78/(747.78+8.4+5.87+13.66)\[1\] 0.9639943
+
+## 64
+
+```{r}
+dandelion <- read_table(
+  "Type Habitat1 Habitat2 Habitat3
+  A 55 31 10
+  B 20 50 15
+  C 30 25 20
+  D 1 10 70"
+) %>%
+  pivot_longer(c("Habitat1", "Habitat2", "Habitat3"), names_to = "Habitat",
+               values_to = "Plant_Count") %>%
+  mutate(Habitat = as_factor(Habitat))%>%
+  mutate(Type = as_factor(Type))
+
+dandelion %>%
+  ggplot(aes(x = Habitat, y = Plant_Count, color = Type)) +
+  geom_line(aes(group = Type)) +
+  geom_point()
+```
+
+D is largest, A is smallest
+
+## 65
+
+```{r}
+newDandelion <- read_table(
+  "Type Habitat1 Habitat2 Habitat3
+  A 3.6 2.6 3.4
+  B 2.2 1.5 1.6
+  C 1.2 2.0 0.5
+  D 0.0 0.0 0.6"
+) %>%
+  pivot_longer(c(Habitat1, Habitat2, Habitat3),
+               names_to = "Habitat", values_to = "headcount") %>%
+  mutate(Habitat = as_factor(Habitat))%>%
+  mutate(Type = as_factor(Type))
+
+newDandelion %>%
+  ggplot(aes(x = Type, y = headcount, color = Habitat)) +
+  geom_line(aes(group = Habitat)) +
+  geom_point()
+newDandelion %>%
+  ggplot(aes(x = Habitat, y = headcount, color = Type)) +
+  geom_line(aes(group = Type)) +
+  geom_point()
+```
+
+D is still largest, and A is still the smallest. Conclusion was correct.
+
+## 66
+
+```{r}
+snapbean <- read.table("../data/snapbean.txt", header = T) %>%
+  mutate(sowdate = as.factor(sowdate)) %>%
+  mutate(variety = as.factor(variety)) %>%
+  dplyr::select(sowdate, variety, Yield)
+anova(lm(Yield ~ sowdate*variety, data = snapbean))
+```
+
+All are significant.
+
+## 67
+
+```{r}
+programmers <- read.table("../data/programmers.txt", header = T) %>%
+  mutate(LargeSystemExp = as.factor(LargeSystemExp)) %>%
+  mutate(YearsOfExp = as.factor(YearsOfExp)) %>%
+  dplyr::select(LargeSystemExp, YearsOfExp, TimePredictionError)
+anova(lm(TimePredictionError ~ LargeSystemExp*YearsOfExp, data = programmers))
+```
+
+All are significant.
+
+## 68
+
+```{r}
+singers <- read_csv("../data/singerheights.csv", show_col_types = FALSE) %>%
+  mutate(part = as.factor(part)) %>%
+  mutate(gender = as.factor(gender))
+
+anova(lm(height~gender*part, data=singers))
+anova(lm(height~part*gender, data=singers))
+
+Anova(lm(height~part*gender, data=singers), type = 3)
+```
+
+d\) Type III SS is not sequential like Type I, so for type III SS gender is now treated like the last term in the model. Consequently, it is now accounting for less unique variation in y. This may also be due to the data being “unbalanced” (more data provided for a term than other terms).
+
+## 69
+
+Evaluate whether pricegroup (either free, cheap, or expensive), prime_genre, or rating group effects the log(size_bytes) of an app. Also consider all the two-way interactions between the main effects. Define the rating group factor as follows: "poorfair" for apps with ratings in the 0 to 3.0 range, "good" for apps with ratings in the 3.5 to 4.0 range, and "excellent" for apps in the 4.5 to 5.0 range. Define price group as follows: "cheap" is for apps in the \$.01 to \$3 range, "expensive" is for apps \$3 or more, and "free" is... well... free. Include only on the top 10 most common genres in your analysis.
+
+```{r, message=FALSE}
+apps <- read_csv("/Users/kimberlywilliams/Documents/BYU_Wint24/Stat230TA/data/AppleStore.csv")
+apps$cont_rating <- as.factor(apps$cont_rating)
+apps$prime_genre <- as.factor(apps$prime_genre)
+```
+
+```{r}
+apps62 <- apps %>% 
+  mutate(pricegroup=cut(price,
+                        breaks=c(0,.001,3,Inf),right=FALSE,
+                        labels=c("free","cheap","expensive"))) %>%
+  mutate(ratinggroup=cut(user_rating,
+                         breaks=c(0,3.1,4.1,5.1),right=FALSE,
+                         labels=c("poorfair","good","excellent"))) %>%
+  add_count(prime_genre,name="nn") %>%  
+  filter(dense_rank(-nn) <= 10) %>%
+  dplyr::select(pricegroup, prime_genre, ratinggroup, size_bytes)
+
+apps62.lm <- lm(log(size_bytes) ~ pricegroup + prime_genre + ratinggroup + 
+                pricegroup:prime_genre + pricegroup:ratinggroup + 
+                prime_genre:ratinggroup + prime_genre:ratinggroup:pricegroup , 
+                data=apps62)
+# summary(apps62.lm)
+anova(apps62.lm) # gives type I
+Anova(apps62.lm,type="II")     # Gives us F statistics and p-values for Type II or III SS
+```

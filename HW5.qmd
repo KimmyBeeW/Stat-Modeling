@@ -1,0 +1,30 @@
+```{r}
+pf(2.2957, 1, 6, lower.tail = F)
+pf(1.6242, 6, 6, lower.tail = F)
+pf(3.1772, 1, 6, lower.tail = F)
+pf(40.7961, 1, 6, lower.tail = F)
+```
+
+```{r}
+A <- c(1, 2, 3, 4, 5, 6)
+sd(A)
+C <- c(6, 5, 3, 4, 5, 6)
+sd(C)
+B <- c(6, 5, 4, 4, 5, 6)
+sd(B)
+mean(B)
+median(B)
+D <- c(11, 12, 13, 14, 15, 16)
+mean(D)
+median(D)
+print("E and G")
+E <- c(14, 17, 29, 4, 3, 10, 34)
+mean(E)
+median(E)
+sd(E)
+G  <- c(14, 17, 29, 4, 3, 34)
+mean(G)
+median(G)
+sd(G)
+```
+

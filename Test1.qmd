@@ -1,0 +1,177 @@
+## Code to Remember
+All the libraries I need:
+```{r}
+library(readr)   ## This will be used to import csv files
+library(ggplot2) ## This library is needed for the colorful ANCOVA plots
+library(rstatix) ## Needed for post-hoc comparisons
+library(emmeans) ## Needed for post-hoc comparisons
+```
+## Block One ##
+
+#1-2
+```{r}
+Exam1Q1Data <- read.csv("https://byu.box.com/shared/static/dliohmp8ml9z42q8yd8m2kpu608z2iu3.csv")
+```
+```{r}
+x <- Exam1Q1Data$states
+mean(x)
+sd(x)
+```
+#3-5
+```{r}
+t.test(x, y = NULL,
+       alternative = "less",
+       mu = 20, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+```
+#7. Calculate power
+```{r}
+mu     <- mean(x)
+sigma <- sd(x)
+n1 <- length(x)
+power.t.test(n = n1, delta = 2, sd = sigma, sig.level = 0.05,
+             power = NULL,
+             type = "one.sample",
+             alternative = "two.sided")
+```
+#9-10. Confidence Interval for mean of x
+```{r}
+x_bar <- mean(x)
+sd <- sd(x)
+n <- length(x)
+df <- n-1
+critical_t <- qt(.95,df)
+se <-sd/sqrt(n)
+me <--2*qt(.05,df)*se
+
+lower_95 <- x_bar + qt(.025,df)*se
+upper_95 <- x_bar - qt(.025,df)*se
+lower_95
+upper_95
+```
+
+
+
+
+## Block Two ##
+Define variables:
+```{r}
+A <- c(78, 82, 86, 75, 90, 88, 92, 79, 85, 81)
+B <- c(72, 77, 68, 85, 79, 74, 92, 88, 91, 96, 82, 78)
+A_m <- mean(A)
+B_m <- mean(B)
+A_sd <- sd(A)
+B_sd <- sd(B)
+A_n <- length(A)
+B_n <- length(B)
+df_A <- A_n - 1
+df_B <- B_n - 1
+df <- df_A + df_B
+A
+B
+A_m
+B_m
+A_sd
+B_sd
+A_n
+B_n
+df_A
+df_B
+df
+```
+16-18.
+```{r}
+t.test(A, B,
+       alternative = "two.sided",
+       mu = 0, paired = FALSE, var.equal = TRUE,
+       conf.level = 0.95)
+```
+21.
+```{r}
+sd <- 3.2
+conf.level <- 0.95
+ME <- 0.5
+power.t.test(n = NULL, delta = ME, sd = sd, sig.level = 0.05, power = .8, type = "one.sample", alternative = "one.sided")
+```
+double checking 21:
+```{r}
+marginSampleSize <- function(sd, conf, ME, samples = 2){
+  return(samples * (qnorm((conf+1)/2) * sd / ME)^2)
+  }
+marginSampleSize(sd = 3.2, conf = 0.95, ME = 0.5, samples = 1)
+```
+triple check
+```{r}
+((1.96^2)*(3.2^2))/(.5^2)
+```
+Im gonna assume it's 158 **************ASK ABOUT THIS LATER PLEASE!!!
+
+
+
+
+## Block 3
+Define variables
+```{r}
+before <- c(150, 160, 155, 162, 148, 170, 158, 152, 155, 165, 142, 160, 150, 156, 158,168,162, 166, 154, 161)
+after <- c(142, 154, 145, 156, 140, 162, 148, 140, 143, 152, 138, 150, 141, 150, 149, 160, 158, 155, 144, 157)
+n <- 20
+mean(before)
+mean(after)
+```
+
+t test
+```{r}
+t.test(before, after, alternative = "greater", paired=TRUE, conf.level = 0.99)
+```
+
+
+
+
+## Block 4
+Define Variables
+```{r}
+mu1 <- 1.2
+mu2 <- 2.2
+mu3 <- 1.5
+mu4 <- 0.9
+sigma2 <- 0.6
+```
+
+29. Calculate power given mus and n
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9) # list of mu_i
+sigma2 <- 0.6   # this is literally just sigma^2 or s^2 if you only have a sample pop.
+power.anova.test(groups = length(mu), n = 8, between.var = sigma2, 
+                 within.var = 0.4, sig.level = 0.05)
+```
+That doesn't seem right so this is how I would calculate power given mus and n
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9) # list of mu_i
+sigma2 <- 0.6   # this is literally just sigma^2 or s^2 if you only have a sample pop.
+power.anova.test(groups = length(mu), n = 8, between.var = var(mu), 
+                 within.var = sigma2)
+```
+
+30. Calculate the p-value
+```{r}
+df1 <- 3 #     numerator df or #of groups - 1
+df2 <- 28 #    denominator df or (#of groups * n) - # of groups
+zscore <- 5.23 #  z-score or z-ratio. MSTreatment/MSError = MST/MSE
+
+pf(q = zscore, df1 = df1, df2 = df2, lower.tail = FALSE)
+```
+Calculate pvalue given F-stat
+```{r}
+pf(q = 5.23, df1 = 4-1, df2 = 32-4,lower.tail = FALSE)
+```
+
+31. Calculate n given power the normal way
+```{r}
+power.anova.test(groups = length(mu), between.var = var(mu), 
+                 within.var = sigma2, power = 0.95)
+```
+but Just in case the rules apply from 29
+```{r}
+power.anova.test(groups = length(mu), between.var = sigma2, 
+                 within.var = .4, power = 0.95)
+```

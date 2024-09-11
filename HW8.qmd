@@ -1,0 +1,125 @@
+---
+title: "Stat 230 HW#8"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+# Numbers 61 and 84
+
+## Problem 61
+
+```{r}
+library(tidyverse)
+library(DescTools) #PostHocTest, TukeyHSD, ScheffeTest
+```
+
+```{r}
+#a
+ns <- 2:20
+powers <- rep(NA,length(ns))
+for (i in 1:length(ns)) powers[i] <- power.anova.test(groups=4, between.var=var(c(21,23,25,27)), within.var=4.7^2, sig.level=0.05, n=ns[i])$power
+
+# create plot of n by power
+plot(ns, powers,type="l",main="Power Curves",xlab="Sample Size",
+               ylab="Power",col="lightblue",lwd=2,ylim=c(0,1))
+
+
+#c
+for (i in 1:length(ns)) powers[i] <- power.anova.test(groups=4, between.var=var(c(27,25,23,21)), within.var=4.7^2, sig.level=0.05, n=ns[i])$power
+
+lines(ns, powers, type="l", col="blue", lty = "dashed", lwd=2,ylim=c(0,1))
+
+#d
+for (i in 1:length(ns)) powers[i] <- power.anova.test(groups=4, between.var=var(c(21,21,21,27)), within.var=4.7^2, sig.level=0.05, n=ns[i])$power
+
+lines(ns, powers,type="l",col="darkorange", lty = 4, lwd=2,ylim=c(0,1))
+
+#e
+for (i in 1:length(ns)) powers[i] <- power.anova.test(groups=4, between.var=var(c(21,21,27,27)), within.var=4.7^2, sig.level=0.05, n=ns[i])$power
+
+lines(ns, powers,type="l",col="forestgreen", lty = 5, lwd=2,ylim=c(0,1))
+```
+
+```{r}
+#b
+ceiling(power.anova.test(groups=4, between.var=var(c(21,23,25,27)), within.var=4.7^2, sig.level=0.05, power=.85)$n)
+```
+
+The smallest group size that gives 85% power is n = 15
+
+## Problem 84
+
+```{r}
+headinjury <- read_csv('../data/headinjury.csv')
+headinjury$Type <- as.factor(headinjury$Type)
+
+headinjury
+```
+
+a)  Name the appropriate design (any of the following are acceptable):
+
+• BF\[1\]\
+
+• One-way ANOVA\
+
+• Completely Randomized Design (CRD)
+
+Model:
+
+yij =μ+αi+εij, i=1,2,...,7 j=1,2,...,10,
+
+where yij is the observed head injury severity scores, μ is the grand mean, αi is the effect for the ith car type, and εij is the error.
+
+b\) Our primary interest is to see if the car types have different mean head-injury severity scores. Write down the appropriate null and alternative hypotheses, carefully defining all symbols.
+
+Ho : α1=α2=α3=α4=α5=α6=α7=0
+
+Ha : At least one αi is different.
+
+c\) Give the ANOVA table and interpret the proper F-test for the hypotheses of interest.
+
+```{r}
+#lm <- old way to do it
+hi.lm <- lm(HeadInjury ~ Type, data=headinjury)
+anova(hi.lm)
+```
+
+```{r}
+#aov <- use because it's multiple comparisons
+hi.aov <- aov(HeadInjury ~ Type, headinjury)
+anova(hi.aov)
+```
+
+We reject the null hypothesis (p-value = 0.0056). At least one αi is different.
+
+d\) Assume that our primary interest is in constructing a confidence interval for each possible pairwise comparison. If we want to ensure that the family-wise error rate is no greater than 0.05, which multiple-comparison approach is most appropriate? Use your chosen approach and interpret this set of pairwise comparisons—which means are significantly different from each other?
+
+```{r}
+PostHocTest(hi.aov, method = "bonferroni")  # wide intervals
+```
+
+```{r}
+PostHocTest(hi.aov, method = "lsd")  # narrow intervals
+```
+
+```{r}
+TukeyHSD(hi.aov)  # in between lsd and bonferroni, but still protects from Type 1 errors and "ensures that the family-wise error rate is no greater than 0.05"
+```
+
+```{r}
+ScheffeTest(hi.aov)  # widest method
+```
+
+The proper approach for pairwise comparisons is **Tukey**. Vans are significantly different from medium (p-val = 0.0243419) and heavy (p-val = 0.0059544) cars.
+
+e\) Compare the width of the interval for one of the pairwise comparisons—say, “μvan − μcompact”—when using: (i) Tukey’s HSD, (ii) Scheffe’, and (iii) Bonferroni. Based on the width of the intervals, which is the best approach for these data?
+
+-   Tukey: diff=357.7 (-137.82985, 853.2298) —\> width: 991.0596
+
+-   Scheffe: diff=357.7 (-239.63254, 955.0325) —\> width: 1194.665
+
+-   Bonferroni: diff=357.7 (-157.44049, 872.8405) —\> width: 1030.281
+
+Tukey has the smallest interval and is therefore the best approach

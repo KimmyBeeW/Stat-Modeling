@@ -1,0 +1,109 @@
+Calculate the p-vlaue
+```{r}
+pf(5, 3, 30, lower.tail = FALSE)
+```
+
+Calculate power given mus and n
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9)
+sigma2 <- 0.3
+power.anova.test(groups = length(mu), n = 8, between.var = var(mu), 
+                 within.var = sigma2)
+```
+Calculate pvalue given F-stat
+```{r}
+pf(q = 5.23, df1 = 4-1, df2 = 32-4,lower.tail = FALSE)
+```
+
+Calculate n given power
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9)
+sigma2 <- 0.3
+# find n
+power.anova.test(groups = length(mu), between.var = var(mu), 
+                 within.var = sigma2, power = 0.95)
+```
+Import:
+```{r}
+library(readr)
+weightloss_ancova <- read_csv("~/Documents/BYU_Fall_2023/Stat230/data/weightloss (ancova).csv")
+weightloss_ancova
+```
+
+ANOVA
+Visualize
+```{r}
+stripchart(weightloss ~ treatment, vertical = TRUE, pch = 1, 
+           data = weightloss_ancova)
+
+boxplot(weightloss ~ treatment, data = weightloss_ancova)
+```
+
+Fit the one-way CRD EFFECTS model with "reference group" constraint
+```{r}
+fit.plan <- aov(weightloss ~ treatment, data = weightloss_ancova)
+alt_model <- lm(weightloss ~ treatment, data = weightloss_ancova)
+```
+Have a look at the estimated coefficients
+```{r}
+coef(fit.plan)
+coef(alt_model)
+```
+
+View all the coefficients
+```{r}
+dummy.coef(fit.plan)
+```
+
+```{r}
+library(emmeans)
+emmeans(fit.plan, specs = ~ treatment)
+```
+Change constraints to "sum to zero"
+```{r}
+options(contrasts = c("contr.sum", "contr.poly")) #for both ordered and unordered values
+fit.plan2 <- aov(weightloss ~ treatment, data = weightloss_ancova)
+coef(fit.plan2)
+dummy.coef(fit.plan2)
+```
+
+Generate ANOVA Table
+```{r}
+summary(fit.plan)
+```
+Calculate the p-vlaue
+```{r}
+pf(0.694, 1, 18, lower.tail = FALSE)
+```
+
+
+
+
+ANCOVA
+```{r}
+library(ggplot2) ## This library is needed for the colorful ANCOVA plots
+library(rstatix) ## Needed for post-hoc comparisons
+library(emmeans) ## Needed for post-hoc comparisons
+```
+Plot the data
+```{r}
+boxplot(weightloss ~ treatment, data = weightloss_ancova)
+````
+
+```{r}
+fit.ancova <- aov(weightloss ~ exercise+treatment, data = weightloss_ancova)
+summary(fit.anova)
+```
+
+Pairwise comparisons
+```{r}
+pwc <- emmeans_test(data = weightloss_ancova,
+    weightloss ~ treatment, covariate = exercise,
+    p.adjust.method = "bonferroni"
+  )
+pwc
+```
+```{r}
+get_emmeans(pwc)
+```
+

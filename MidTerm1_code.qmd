@@ -1,0 +1,168 @@
+## Code to Remember
+All the libraries I need:
+```{r}
+library(readr)   ## This will be used to import csv files
+library(ggplot2) ## This library is needed for the colorful ANCOVA plots
+library(rstatix) ## Needed for post-hoc comparisons
+library(emmeans) ## Needed for post-hoc comparisons
+```
+
+Calculate the p-vlaue
+```{r}
+df1 <- 3 #     numerator df or #of groups - 1
+df2 <- 30 #    denominator df or (#of groups * n) - # of groups
+zscore <- 5 #  z-score or z-ratio. MSTreatment/MSError = MST/MSE
+
+pf(q = zscore, df1 = df1, df2 = df2, lower.tail = FALSE)
+pf(5, 3, 30, lower.tail = FALSE)
+```
+
+Calculate power given mus and n
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9) # list of mu_i
+sigma2 <- 0.3   # this is literally just sigma^2 or s^2 if you only have a sample pop.
+power.anova.test(groups = length(mu), n = 8, between.var = var(mu), 
+                 within.var = sigma2)
+```
+
+Calculate pvalue given F-stat - example 2
+```{r}
+pf(q = 5.23, df1 = 4-1, df2 = 32-4,lower.tail = FALSE)
+```
+
+Calculate n given power
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9)
+sigma2 <- 0.3
+# find n
+power.anova.test(groups = length(mu), between.var = var(mu), 
+                 within.var = sigma2, power = 0.95)
+```
+
+
+Import:
+```{r}
+data_set <- read_csv("~/Documents/BYU_Fall_2023/Stat230/data/"___".csv")
+data_set
+```
+define varibles:
+```{r}
+continuous <- y_or_response
+categorical <- x_or_explanetory
+xi <- covariant
+```
+
+ANOVA
+Visualize
+```{r}
+stripchart(continuous ~ categorical, vertical = TRUE, pch = 1, 
+           data = data_set)
+
+boxplot(continuous ~ categorical, data = data_set)
+```
+
+Fit the one-way CRD EFFECTS model with "reference group" constraint
+```{r}
+fit.plan <- aov(continuous ~ categorical, data = data_set)
+alt_model <- lm(continuous ~ categorical, data = data_set)
+```
+Have a look at the estimated coefficients
+```{r}
+coef(fit.plan)
+coef(alt_model)
+```
+
+View all the coefficients
+```{r}
+dummy.coef(fit.plan)
+```
+
+```{r}
+emmeans(fit.plan, specs = ~ categorical)
+```
+Change constraints to "sum to zero"
+```{r}
+options(contrasts = c("contr.sum", "contr.poly")) #for both ordered and unordered values
+fit.plan2 <- aov(continuous ~ categorical, data = data_set)
+coef(fit.plan2)
+dummy.coef(fit.plan2)
+```
+
+Generate ANOVA Table
+```{r}
+summary(fit.plan)
+```
+
+ANCOVA
+Plot the data
+```{r}
+boxplot(continuous ~ categorical, data = data_set)
+```
+
+```{r}
+fit.ancova <- aov(continuous ~ xi+categorical, data = data_set)
+summary(fit.ancova)
+```
+
+Pairwise comparisons
+```{r}
+pwc <- emmeans_test(data = data_set,
+    continuous ~ categorical, covariate = xi,
+    p.adjust.method = "bonferroni"
+  )
+pwc
+```
+```{r}
+get_emmeans(pwc)
+```
+
+
+
+t.test
+```{r}
+t.test(x, y = NULL,
+       alternative = c("two.sided", "less", "greater"),
+       mu = 0, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95, ...)
+```
+
+Notes:
+SE --> Standard Error --> s/sqrt(n)
+p-value -->
+t-test --> (x_bar - mu)/sqrt(sigma^2 / sqrt(n))
+conf int --> x_bar +- t*SE
+test_stat --> x_bar / SE
+power --> probability you reject the null when the null is wrong
+      --> 1 - probability of a Type 2 Error
+
+```{r}     
+sigma <- 5/sqrt(15)
+z_score <- qnorm(.05)
+sample_mean <- 30
+critical_z <- sample_mean + z_score*sigma
+pnorm(critical_z, 28.5, sigma) # --> probability under a normal dist.
+# pnorm(x, mu, sigma) --> probability of this point or less
+```
+
+test stat for test comparing two contents:
+```{r}
+x_bar_1 <- "sample mean 1"
+x_bar_2 <- "sample mean 2"
+n_1 <- "number in sample 1"
+n_2 <- "number in sample 2"
+sd_1 <- "standard deviation 1"
+sd_2 <- "standard deviation 2"
+s_pool <- ((n_1-1)*sd_1+(n_2-1)*sd_2)/(n_1+n_2-2)
+s_sqr_pool <- s_pool*s_pool
+t_stat <- (x_bar_1 - x_bar_2) / sqrt(s_sqr_pool*(1/n_1 + 1/n_2))
+```
+
+paired t.test
+```{r}
+x <- c(1.3,2.5,3.1,4.3,5.4)
+y <- c(2.3,3.8,4.6,5.5,6.4)
+t.test(x,y,paired=TRUE)
+```
+
+
+

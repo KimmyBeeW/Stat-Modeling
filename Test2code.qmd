@@ -1,0 +1,535 @@
+Libraries
+```{r}
+library(emmeans)
+library(car)
+library(tidyverse)
+library(haven)
+```
+
+#Block 1: 1-2
+𝜇=1.2, 𝜇=2.2, 𝜇=1.5, 𝜇=0.9, 𝜇=0.6
+variance,  𝜎2=0.6
+Calculate power given mus and n
+```{r}
+mu     <- c(1.2, 2.2, 1.5, 0.9, 0.6) # list of mu_i
+sigma2 <- 0.6   # this is literally just sigma^2 or s^2 if you only have a sample pop.
+power.anova.test(groups = length(mu), n = 8, between.var = var(mu), 
+                 within.var = sigma2)
+```
+```{r}
+power.anova.test(groups = length(mu), between.var = var(mu), 
+                 within.var = sigma2, power = 0.95)
+```
+
+#Block 2: 3-5
+Contrast Coefficients Consider a popcorn flavor study with three factors: Brand (orville vs. generic), Oil (Oil vs. buttery), and Salt (low vs. high). The eight treatments are set up as follows:
+
+```{r}
+pop <- read.table( col.names=c("trt",	"brand",	"oil",	"salt"),
+                   text="
+                   1	orville	oil	low
+                   2	orville	oil	high
+                   3	orville	buttery	low
+                   4	orville	buttery	high
+                   5	generic	oil	low
+                   6	generic	oil	high
+                   7	generic	buttery	low
+                   8	generic	buttery	high")
+pop
+```
+3. the vector of contrast coefficients for testing the Salt main effect: c(.25, -.25, .25, -.25, .25, -.25, .25, -.25)
+4. the vector of contrast coefficients for testing the average of orville, oil vs. generic, oil: c(.5, .5, 0, 0, -.5, -.5, 0, 0)
+5. the vector of contrast coefficients for testing the average of buttery oil, low salt vs. buttery oil, high salt: c(0, 0, .5, -.5, 0, 0, .5, -.5)
+
+
+#Block 4: 6-7
+Beekeepers sometimes use smoke from burning cardboard to reduce their risk of getting stung.
+  blocking factor: The occasion or time the trial is run. Not necessarily the block of 16 balls because that is what is being tested, but the time the trial is run because that is a potential variable that we don't care about the effect, so we want to factor it out.
+  experimental unit: Each group of 8 balls. Because he counts the total number of stingers in the balls
+
+#Block 5: 8-23
+```{r}
+datam <- read.csv("metal.csv",header=TRUE)
+str(datam)
+alloy<- as.factor(datam$alloy)
+oven <- as.factor(datam$oven)
+y<-datam$strength
+boxplot(y~alloy)
+modelm<-lm(y~alloy*oven)
+anova(modelm)
+modelm<-lm(y~alloy+oven)
+anova(modelm)
+modelm<-lm(y~alloy)
+anova(modelm)
+modelm<-lm(y~oven*alloy)
+anova(modelm)
+```
+
+#Block 5: 8-23
+Import
+```{r}
+casting_alloys <- read_csv("~/Documents/BYU_Fall_2023/Stat230/Test2/-Pwl5xzwKAnI.csv")
+casting_alloys$oven <- as.factor(casting_alloys$oven)
+casting_alloys$alloy <- as.factor(casting_alloys$alloy)
+casting_alloys$temp <- as.factor(casting_alloys$temp)
+casting_alloys
+```
+```{r}
+boxplot(oven~alloy,data=casting_alloys)
+```
+```{r}
+boxplot(alloy~oven,data=casting_alloys)
+```
+the variation in the strength is the same for all three levels of alloy
+```{r}
+sd_s_ca <- aggregate(casting_alloys$strength ~ casting_alloys$alloy, FUN = sd)
+sd_s_ca
+```
+
+```{r}
+interaction.plot(casting_alloys$oven, casting_alloys$alloy, casting_alloys$strength)
+```
+```{r}
+interaction.plot(casting_alloys$alloy, casting_alloys$oven, casting_alloys$strength)
+```
+
+```{r}
+fit_ca <- lm(strength ~ oven * alloy, data = casting_alloys)
+anova(fit_ca)
+```
+
+
+#Block 6 26-29
+#Tolley's code
+```{r}
+meniscus$suture.type <- factor(meniscus$suture.type, levels = c("vert", "fast", "arrow"))
+model1<-lm(response~suture.type,data=meniscus)
+anova(model1)
+aggregate(response~suture.type,data=meniscus,FUN=mean)
+tstat<-(6.01667-7.7)/sqrt(0.8256/3)
+tstat
+qt(.025,15)
+qt(.025/3,15)
+library(emmeans)
+emm<-emmeans(model1,specs=~suture.type)
+emm
+contrast(emm,method="dunnett")
+```
+
+
+```{r}
+meniscus <- read.table('~/Documents/BYU_Fall_2023/Stat230/data/meniscus.dat',header=TRUE)
+meniscus$suture.type <- as.factor(meniscus$suture.type)
+meniscus
+```
+```{r}
+boxplot(response~suture.type,data=meniscus)
+```
+
+```{r}
+sd_s <- aggregate(meniscus$response ~ meniscus$suture.type, FUN = sd)
+sd_s
+```
+
+
+```{r}
+fit_men <- lm(response ~ suture.type, data=meniscus)
+anova(fit_men)
+```
+```{r}
+# Conduct a two-sided t-test between levels "a" and "b"
+t.test(meniscus$response[meniscus$suture.type == "arrow"], meniscus$response[meniscus$suture.type == "fast"])
+```
+```{r}
+pairwise.t.test(meniscus$response, meniscus$suture.type, p.adjust.method = "bonferroni")
+```
+```{r}
+library(multcomp)
+
+# Create a data frame with the data you want to analyze
+data <- meniscus
+
+# Convert the treatment column to a factor and set the reference level to the control group
+data$suture.type <- factor(data$suture.type)
+data$suture.type <- relevel(data$suture.type, ref = "vert")
+
+# Run an ANOVA test on the data
+model <- aov(response ~ suture.type, data = data)
+
+# Use the glht() function to perform the Dunnett Test with the control group specified
+test <- glht(model, linfct = mcp(suture.type = "Dunnett"), alternative = "greater")
+
+# Use the summary() function to view the results of the test
+summary(test)
+```
+
+
+
+
+
+#Block 7 30-32
+```{r}
+potatoes <- read_csv("~/Documents/BYU_Fall_2023/Stat230/Test2/potatoes.csv")
+potatoes$state <- as.factor(potatoes$state)
+potatoes
+```
+```{r}
+#tolley's code
+boxplot(weight~state,data=potatoes)
+
+model2<- lm(weight~state,data=potatoes)
+
+anova(model2)
+
+aggregate(weight~state,data=potatoes,FUN=mean)
+
+tstat2 <- (2.947-0.825)/sqrt(0.5301/5)
+
+tstat2 #Problem 31
+
+qt(.025,27)
+
+qt(.025/3,27)#Problem 32
+```
+
+my code:
+```{r}
+# Create two vectors, one for each state, containing the data you want to analyze
+kansas <- c(0.73, 0.63, 0.85, 0.79, 0.97, 0.80, 0.59, 0.67, 1.22, 1.00)
+idaho <- c(3.78, 2.43, 3.25, 2.31, 2.47, 2.65, 6.10, 2.32, 2.21, 1.95)
+
+# Use the t.test() function in R to perform the two-sample t-test
+t.test(idaho, kansas, alternative = "two.sided", var.equal = FALSE, mu = 0, conf.level = 0.95)
+```
+```{r}
+pairwise.t.test(potatoes$weight, potatoes$state, p.adjust.method = "bonferroni")
+```
+```{r}
+kansas <- c(0.73, 0.63, 0.85, 0.79, 0.97, 0.80, 0.59, 0.67, 1.22, 1.00)
+idaho <- c(3.78, 2.43, 3.25, 2.31, 2.47, 2.65, 6.10, 2.32, 2.21, 1.95)
+texas <- c(1.20, 1.14, 1.43, 1.42, 1.24, 1.04, 1.51, 1.23, 0.91,1.41)
+
+# Perform pairwise t-tests with Bonferroni's correction
+p_values <- pairwise.t.test(potatoes$weight, potatoes$state, p.adjust.method = "bonferroni")
+p_values
+
+# Extract the adjusted p-values
+adjusted_p_values <- p_values$p.value
+adjusted_p_values
+
+# Calculate the new critical t-test
+new_critical_t <- qt(p = 0.05 / choose(length(adjusted_p_values), 2), df = sum(lengths(list(kansas, idaho, texas))) - length(list(kansas, idaho, texas)))
+new_critical_t
+
+# Print the adjusted p-values and the new critical t-test
+cat("Adjusted p-values:\n")
+print(adjusted_p_values)
+cat("\nNew critical t-test:", new_critical_t)
+```
+
+
+#Block 33-34
+```{r}
+#tolley's code
+data3 <- read.csv("AlloyUnbal.csv",header=TRUE)
+data3
+xtabs(~oven+alloy, data=data3)
+library(car)
+options(contrasts=c("contr.sum","contr.poly"))
+oven <- as.factor(data3$oven)
+alloy <- as.factor(data3$alloy)
+strength<-data3$strength
+model4 <- aov(strength~oven+alloy+oven:alloy)
+model4
+
+Anova(model4,type="III",data=data3)
+options(contrasts=c("contr.treatment","contr.poly"))
+
+anova(model4)
+```
+
+```{r}
+metal <- read_csv("~/Documents/BYU_Fall_2023/Stat230/Test2/metal.csv")
+metal$alloy <- as.factor(metal$alloy)
+metal$oven <- as.factor(metal$oven)
+metal
+```
+```{r}
+fit_met <- lm(strength ~ oven * alloy, data = metal)
+anova(fit_met)
+```
+```{r}
+modelmet <- aov(strength~oven*alloy, data = metal)
+summary(modelmet)
+```
+```{r}
+Anova(modelmet,type="III")
+```
+
+```{r}
+#Tolley's Problems 35-37
+
+qf(.99,3,16) #Problem 36
+
+1-pf(3.55,3,16) #Problem 35
+
+qt(.995,16)*sqrt(23.32/5)+4.36 #37
+
+qt(.995,16)*sqrt((4.55^2)/5)+4.36 # Alternate 37
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Two-Way ANOVA
+For the two factor case we will analyze the oxide layer data. This data set consists off a fab unit that is tasked with oxidizing layers of material on wafers. There are three different types of material: 1. virgin 2. in-house 3. external
+
+There are three different locations in the furnace that does the oxidation labeled “1”, “2”, and “3”.
+
+We would like to determine if there is a difference in material and location. If there is, which is best. Here the thicker the oxide level the better.
+
+First read in the data and see what the variables are. Note that since the data has a “.dat” suffix we use “read.table” command in R.
+```{r}
+oxide <- read.table('~/Documents/BYU_Fall_2023/Stat230/data/oxide.dat',header=TRUE)
+str(oxide)
+```
+Note that “type” and “rep” are both listed as character variables. R will treat these as “factors” in our analysis of variance. However, “location” is an “int” or interger variable as far as R is concerned and will not be treated as a factor unless we specify otherwise. Besides the “str” command, above, we can check to see if “oxide” is considered a factor of not by R:
+```{r}
+is.factor(oxide$location)
+```
+
+Since the location variable is not a factor variable, we’ll need to make it a factor variable to use it in ANOVA. We create a new variable that will be the same as the “location” variable, but make it a factor type, called “locf” and put it in the data set.
+```{r}
+locf <- as.factor(oxide$location)
+is.factor(locf)
+```
+```{r}
+oxide$locf <- locf
+oxide
+```
+Before we do an analysis let’s look at a boxplot of the data.
+
+Wither only 3 levels of each of the two facors we can examine each main effect and the interaction with a series of box plots. Starting with the main effects, locf and type. First we look at locf:
+```{r}
+boxplot(oxide~locf,data=oxide)
+```
+ Note that location “2” seems to have a much larger spread (sd) than either location 1 and 3. We can see if the assumption that the ratio of the largest standard deviation to the smalles is no more the 2. First let’s get the standard deviations for each value of locf:
+```{r}
+sd_s <- aggregate(oxide$oxide ~ oxide$locf, FUN = sd)
+sd_s
+```
+
+We see that there is no evidence that the assumption of equal variance is violated. One may be surprized by this given the box plot. However, the outliers for values of locf =1 or increase the standard deviations. Continuing on with the main effect “type” we have
+```{r}
+boxplot(oxide~type,data=oxide)
+```
+
+Again we can check the standard deviations:
+```{r}
+sd_s <- aggregate(oxide$oxide ~ oxide$type, FUN = sd)
+sd_s
+```
+
+Here we note that “ext” sd is slightly more than twice the “in-house” sd. This is a boarder line violation of the assumption. For illustration, however, we will ignore this and continue with an analysis of variance as if there was no problem.
+
+We can write our model to perform the ANOVA.
+```{r}
+fit <- lm(oxide ~ locf + type + locf:type, data=oxide)
+anova(fit)
+```
+This does the same thing
+```{r}
+fit <- lm(oxide ~ locf*type, data=oxide)
+anova(fit)
+```
+
+As we see, the only significant term is the interaction. If the interaction is significant, it is always a good idea to look at an interaction plot. Fortunately, this is quite easy in R. We just use the “interaction.plot()” command.
+```{r}
+interaction.plot(oxide$locf,oxide$type,oxide$oxide)
+```
+ You can see essentially the same plot, but in a different way by changing the order of the arguments in the ‘interaction.plot’ command.
+```{r}
+interaction.plot(oxide$type,oxide$locf,oxide$oxide)
+```
+ In either case, we can see that the oxide layer is thickest in an external wafer in location 1.
+
+When the interaction is significant, you are essentially analysing a one-way anova with the number of treatments equal to the number of cells. To examine which cells might be significant, we construct confidence intervals exactly like we did in the one-way case using the emmeans command. In this case, we are only worried about the two-way interaction means.
+```{r}
+emmeans(fit,specs=~locf:type)
+```
+You can see that there is quite a bit of overlap in the CI’s, so there is not one cell that offers the best treatment. Rather, there are a number of cells that offer good choices for a thick oxide layer.
+```{r}
+contrast(fit,method="tukey")
+```
+
+
+
+## Randomized Block Designs
+We will use the data “orange”. The data is to determine the productivity of orange trees according to one of three different levels of fertilizer. We will take tree from three different locations in the orchard and apply one of three different types of fertilizer. The different locations are labeled here as “plots.” In this data set we will assume that the variable “plot”, meaning the plot of ground where the orange trees were, are blocks. This means that we recognize that different plots may yield different amounts of oranges, but our primary interest is to factor this out and look only at the effects of fertilizer on productivity.
+```{r}
+orange <- read.table('~/Documents/BYU_Fall_2023/Stat230/data/orange.dat',header=T)
+orange
+```
+
+```{r}
+str(orange)
+```
+Again we need to make sure our “plot” variable is a factor variable. According to the “str” command, “plot” is an integer. This time we will write the model differently to take care of the issue.
+```{r}
+fit <- lm(yield ~ fertilizer + as.factor(plot),data=orange)
+anova(fit)
+```
+Note that this model is written without an interaction. Remember we have assumed that “plots” is a blocking variable and so we assume that there is no interaction. Essentially, we are using the interaction term as our error term (or residual) since we have no replication. You can use this same technique when you have replication by running the model with the interaction term, but in this case, the appropriate error term for the fertilizer effect would be the interaction term. The reason for this is that the randomness of the observation comes from the blocking variable besides the random error.
+
+What happens if you ignore the blocking term?
+```{r}
+fit1 <- lm(yield ~ fertilizer, data=orange)
+anova(fit1)
+```
+You can see that now the fertilizer effect is no longer significant. The reason for this is that there is so much variability in the plots that if you do not factor that out, the overall variance is so large that it is difficult to detect any difference in the fertilizers.
+
+We now use the emmeans command to get confidence intervals on the fertilizer means. You will need to use the original model. Note that if you try to use emmeans on the original data before you fit a model, it will not work.
+```{r}
+emmeans(fit,specs = ~fertilizer)
+```
+
+## Factorial Models
+To illustrate more than two factors, consider the chemical experiment where there are three factors: the catalyst, the reagent, and the method of stirring to produce a chemical outcome.
+```{r}
+chemical <- read.table('~/Documents/BYU_Fall_2023/Stat230/data/chemical.dat',header=T)
+chemical
+```
+```{r}
+str(chemical)
+```
+We have the same problem with numeric instead of factor variables, all factor levels are represented by integers. We can take care of this by using the “as.factor” command, as above, or in the statement of the model. Let’s take care of this in the model command, as well as demonstrating another possible shortcut of notation.
+```{r}
+fit <- lm(yield ~ as.factor(catalyst)*as.factor(reagent)*as.factor(stirring),data=chemical)
+anova(fit)
+```
+By the manner in which we have written this, we note that there is one three way interaction and 3 two way interaction in addition to the 3 manin effects. We can find the cell means using the same technique we have used in other examples. Using the emmeans command, we can look at whatever margin we are interested in. So first we will examine the means for the catalyst by reagent interaction.
+```{r}
+yield.emm<-emmeans(fit,specs=~as.factor(catalyst):as.factor(reagent))
+```
+```{r}
+yield.emm
+```
+We see the same pattern in the interaction plot.
+```{r}
+interaction.plot(as.factor(chemical$catalyst),as.factor(chemical$reagent),chemical$yield)
+```
+ When we look at these means, we can see what the interaction is. Catalyst 1 does much better with reagent 2 than with reagent 1, while the reagent has little affect on catalyst 2. The note about results being misleading would only apply if the 3-way interaction was significant.
+
+We could also look at main effects of catalyst and reagent, but here the results are misleading because of the significant interaction between catalyst and reagent.
+```{r}
+emmeans(fit,specs = ~as.factor(catalyst))
+```
+```{r}
+emmeans(fit,specs = ~as.factor(reagent))
+```
+
+Now to look at multiple testing, given that we have a file with the emmeans output “yield.emm”, we can try Tukey or Dunnett:
+```{r}
+contrast(yield.emm,method="tukey")
+```
+```{r}
+contrast(yield.emm,method="dunnett")
+```
+
+
+## Factorial Experiments with a Block
+Often one performs a factorial experiment in each of several block. For example the 3 factor chemical experiment could be done on each of three diffent days, or by five different lab techs. Or it could be done with the reagent supplied by two different chemical suppliers. All of these would be blocking variables. In essence, the experiment consists of the entire 3 factor experiment being performed in each block.
+
+To illustrate the factorial experiment with a blocking factor we look at the data from the “Helicopter Experiment” where a “helicopter” made of paper with 3 different wing lengths and 2 different body lengths was dropped from 6 feet in an indoor setting. Time to reach the floor was the response variable.
+
+First we read in the data and set the factors to “factor”.
+```{r}
+#Helicopter Data Fall 2023
+
+Hdata <- read.csv("~/Documents/BYU_Fall_2023/Stat230/data/HelicopterF2023.csv",header=TRUE)
+str(Hdata)
+```
+```{r}
+trt <- factor(Hdata$Trt)
+rep <- factor(Hdata$Rep)
+y <- Hdata$Time
+BLngth <-factor(Hdata$BodyLength)
+Wlngth <- factor(Hdata$WingLength)
+block <- factor(Hdata$Team)
+```
+In this data file there are some redundant variables as far as data analysis is concerned. For example both “rep” and “trt” have meaning in gathering the data but not in the analysis.
+
+Following above we look at the data to determine if the assumptions of equal variance is satisfied. Be do this with a box plot of each of the factors. Note that since we have already defined the variables above to be specific to this program and not simply elements of a data frame, we can use the variable names without having to indicate the data source.
+```{r}
+boxplot(y~block)
+```
+```{r}
+boxplot(y~Wlngth)
+```
+```{r}
+boxplot(y~BLngth)
+```
+```{r}
+boxplot(y~BLngth:Wlngth)
+```
+ These figures seem to indicate that the variability over wing length and over body length are about equal. Just to make sure let’s calculate the individual standard deviations for each wing length by body length combination:
+```{r}
+sd_s <- aggregate(y ~ BLngth:Wlngth, FUN = sd)
+sd_s
+```
+
+Taking the ratio we note that the standard deviation for the long wing length by short body length is high, relative to the short wing length sd’s. Ignoring this problem we will go ahead with a model. Remember that the block has no interaction with the two factors.
+```{r}
+model1 <- lm(y~block+BLngth+Wlngth+BLngth:Wlngth)
+anova(model1)
+```
+To see what blocking does, if we remove blocks from the model we get
+```{r}
+model2<- lm(y~BLngth+Wlngth+BLngth:Wlngth)
+anova(model2)
+```
+And finally, looking at confidence intervals for every combination of treatment factos we can use emmeans again.
+```{r}
+emmeans(model1,specs=~BLngth:Wlngth)
+```
+
+##Unbalanced data.
+We consider now the data on cancer rates by gender for different types of cancer:
+```{r}
+# use log(days) as the response variable (see HW #8)
+cancer <- read.csv("~/Documents/BYU_Fall_2023/Stat230/data/cancer.csv")
+str(cancer)
+```
+```{r}
+y<- log(cancer$days)
+gender <- as.factor(cancer$gender)
+type <- cancer$type
+boxplot(y~gender:type)
+```
+ We wish to determine if there is a gender effect, first adjusting for the type of cancer and the interaction between cancer type and gender. To do this we must load the library “car”.
+```{r}
+library(car)
+```
+```{r}
+modelub <- aov(y~gender*type)
+summary(modelub)
+```
+```{r}
+Anova(modelub,type="III")
+```
+The code first fits an analysis of variance model with a sequential fit, adjusting for only those factors that preceeded it in the table. This is the Type I sum of squares method. We also fit a Type III sum of square method by using the same fitted model, but instead of using the summary command we use the Anova command with type=“III”.
+
+We see that, overall there is no gender effect with a p-value of 0.5017 when both type and interaction is removed, (type III analysis) but, without adjusting for type and interaction, the p-value is 0.35195.

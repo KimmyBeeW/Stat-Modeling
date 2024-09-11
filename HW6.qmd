@@ -1,0 +1,131 @@
+---
+title: "Stat 230 HW#6"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+![](conf_int.png){fig-align="center" width="381"}
+
+![](pop_data.png){fig-align="center" width="376"}
+
+![](pop_ANOVA_table.png){fig-align="center" width="404" height="223"}
+
+Problem 47a
+
+```{r}
+x1 <- 74
+x2 <- 38.25
+t_star <- qt(0.975, 4)
+MSE <- 84.625
+
+CU <- x1-x2 + t_star*sqrt((.25+.25)*MSE)
+CL <- x1-x2 - t_star*sqrt((.25+.25)*MSE)
+print(cbind(CL, CU))
+```
+
+Problem 47b
+
+```{r}
+x1 <- 59
+x2 <- 53.25
+t_star <- qt(0.975, 4)
+MSE <- 84.625
+
+CU <- x1-x2 + t_star*sqrt((.25+.25)*MSE)
+CL <- x1-x2 - t_star*sqrt((.25+.25)*MSE)
+print(cbind(CL, CU))
+```
+
+Problem 47c
+
+```{r}
+x1 <- mean(c(81, 85))
+x2 <- mean(c(36, 47))
+t_star <- qt(0.975, 4)
+MSE <- 84.625
+
+CU <- x1-x2 + t_star*sqrt((.5+.5)*MSE)
+CL <- x1-x2 - t_star*sqrt((.5+.5)*MSE)
+print(cbind(CL, CU))
+```
+
+Problem 48
+
+```{r}
+IQR <- qnorm(0.75) - qnorm(0.25)
+IQR
+high_bound <- qnorm(0.75)+(1.5*IQR)
+low_bound <- qnorm(0.25)-(1.5*IQR)
+print(cbind(low_bound, high_bound))
+ph <- pnorm(high_bound, lower.tail = F)
+ph1 <- 1 - pnorm(high_bound)
+pl <- pnorm(low_bound)
+ph+pl
+# or 
+ph*2 # because the distribution is symmetric
+```
+
+Problem 49
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+cancer <- read_table("cancer.txt")
+cancer$type <- as.factor(cancer$type)
+cancer$gender <- as.factor(cancer$gender)
+cancer
+```
+
+```{r}
+cancer %>%
+  group_by(type) %>%
+  summarize(mean(days),sd(days))
+
+boxplot(cancer$days ~ cancer$type)
+```
+
+In order to do ANOVA certain assumptions must be met:
+
+CAZSIN
+
+-   Constant affects (yij = µ + αi + εij)
+
+-   Additive
+
+-   Zero mean
+
+-   Standard deviation is relatively equal across groups (2 to 3)
+
+-   Independence (brain)
+
+-   Normality (no extreme skewness or horrible outliers)
+
+The data is heavily right-skewed, and the standard deviations are extremely unequal, so assumptions for ANOVA are not met.
+
+Problem 49b
+
+```{r}
+cancer$lndays <- log(cancer$days)
+cancer
+cancer %>%
+  group_by(type) %>%
+  summarize(mean(lndays),sd(lndays))
+
+boxplot(cancer$lndays ~ cancer$type)
+```
+
+Problem 49c
+
+We use log transformations so the assumptions for ANOVA can be met.
+
+Problem 50
+
+```{r}
+sample(1:36,36,replace=FALSE)
+```
+
+first 9 assigned to A, second to B, etc

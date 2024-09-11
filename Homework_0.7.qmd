@@ -1,0 +1,89 @@
+I'm trying something new. We'll see how it goes.
+Import the data set
+```{r}
+library(readr)
+section_grades2 <- read_csv("/Users/kimberlywilliams/Documents/BYU_Fall_2023/Stat230/Homework/section_grades2.csv")
+```
+
+The researcher would like to know what kind of power she can expect to detect a difference in means of 4, using samples of size 20 for each section with a standard deviation of 10. Use the power.t.test function in R to calculate power for this scenario. The hypothesis she is testing is whether or not the mean score for Seciton 5 is greater than the mean score for section 7.
+```{r}
+power.t.test(n = 20, delta = 4, sd = 10,
+             power = NULL,
+             type = ("two.sample"),
+             alternative = ("one.sided"),
+             strict = FALSE)
+```
+
+Calculate the mean score for Section 5.
+```{r}
+section_5 <- c(96.11,95.48,80.89,92.89,84.96,87.56,90.13,88.54,91.60,98.01,83.61,95.17,95.6,91.61,90.74,81.48,93.30,88.45,97.15,92.62)
+mean_5 <- mean(section_5)
+mean_5
+sd_5 <- sd(section_5)
+sd_5
+```
+
+Calculate the standard deviation of the scores for section 7.
+```{r}
+section_7 <- c(91.36,97.23,93.82,76.26,95.50,93.60,91.45,94.59,88.58,72.84,71.83,95.76,94.20,85.28,72.10,90.85,91.51,83.48,93.29,85.89)
+#section_grades2 |>
+#  filter(Section == "7") |>
+#  na.omit()
+#section_7
+mean_7 <- mean(section_7)
+mean_7
+sd7 <- sd(section_7)
+sd7
+```
+
+test variance
+```{r}
+sd7^2 / sd_5^2
+
+```
+
+Calculate the test statistic, t, for testing whether or not the mean score for Section 5 is greater than the mean score for Section 7. And Calculate the p-value for testing the hypothesis that the mean of the scores for Section 5 is greater than the mean of the scores for section 7. 
+```{r}
+t.test(section_5, section_7,
+       alternative = ("greater"),
+       mu = 0, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+```
+
+Confidence interval for Section 5
+```{r}
+confidence_interval <- function (section_5, interval) {
+  # Standard deviation of sample
+  sd_5
+  # Sample size
+  n <- length(section_5)
+  # Mean of sample
+  mean_5
+  # Error according to t distribution
+  error <- qt ((interval + 1)/2, df = n - 1) * sd_5 / sqrt(n)
+  # Confidence interval as a vector
+  result <- c("lower" = mean_5 - error, "upper" = mean_5 + error)
+  return (result)
+}
+
+confidence_interval (section_5, 0.95)
+
+```
+
+A researcher wants to conduct a one-sample study to test whether the mean BMI for emperor penguins in one part of Antarctica is greater than that of the general population of emperor penguins. The researcher plans to use a 95% confidence level and a margin of error of 0.5. Assume the population standard deviation is 3.2. What sample size is required for this study?
+```{r}
+marginSampleSize <- function(sd, conf, ME, samples = 2){
+  return(samples * (qnorm((conf+1)/2) * sd / ME)^2)
+}
+
+marginSampleSize(sd = 3.2, conf = 0.95, ME = 0.5, samples = 1)
+
+```
+
+Suppose we want to know if the mean ACT score is different than 26, testing for a difference as small as 0.5. The standard deviation of ACT scores is about 2.7. We want to use a significance level of 0.05 and have a power of 0.9. What sample size should we use?
+```{r}
+power.t.test(delta = 0.5, sd = 2.7, sig.level = 0.05, power = 0.9, 
+                   alternative = "two.sided", type = "one.sample")
+
+```
+

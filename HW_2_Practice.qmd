@@ -1,0 +1,109 @@
+## Section 2 Practice
+
+(5) For a one-way ANOVA, we found the F-ratio to be 6, the numerator degrees of freedom to be 8, the denominator degrees of freedom to be 20. Calculate the p-value using R.
+```{r}
+pf(6, 8, 20, lower.tail = FALSE)
+```
+
+(6) Torin's spouse told him that the plants on the east side of their house grow better than those on the south or west sides. Torin decides to grow six of the same plant on each side of the house, and calculates a mean plant growth for each. His results are included below: 
+𝜇1=1.7,𝜇2=2.6,𝜇3=1.4,𝜎2=0.4,𝑛𝑖=6
+```{r}
+mu     <- c(1.7, 2.6, 1.4)
+sigma2 <- 0.4
+power.anova.test(groups = length(mu), n = 6, between.var = var(mu), 
+                 within.var = sigma2)
+```
+(7) After his analysis, Torin gets an F statistic of 4.18. Using R, calculate the p-value for this F statistic to four decimal places.
+```{r}
+# pf(fstat, df1, df2, lower.tail = FALSE)
+pf(4.18, 2, 15, lower.tail = FALSE)
+```
+
+(8) Torin wants to create a new study using the same information, but this time he wants 95% power. What sample size should he use?
+```{r}
+mu     <- c(1.7, 2.6, 1.4)
+sigma2 <- 0.4
+# find n
+power.anova.test(groups = length(mu), between.var = var(mu), 
+                 within.var = sigma2, power = 0.95)
+```
+
+
+All the libraries I need:
+```{r}
+library(readr)   ## This will be used to import csv files
+library(ggplot2) ## This library is needed for the colorful ANCOVA plots
+library(rstatix) ## Needed for post-hoc comparisons
+library(emmeans) ## Needed for post-hoc comparisons
+```
+ANCOVA
+A researcher is studying the strengths of three different alloys. Twelve bars of each alloy were forged at different temperatures and had their strengths measured. Use the alloy.csv data (in the Content section) to answer the questions in this block using R.
+
+After loading in the data, be sure to run the following line of code:
+
+alloy$alloy <- as.factor(alloy$alloy)
+
+Import:
+```{r}
+data_set <- read_csv("~/Documents/BYU_Fall_2023/Stat230/data/alloy.csv")
+data_set$alloy <- as.factor(data_set$alloy)
+data_set
+```
+define varibles:
+```{r}
+continuous <- data_set$strength
+categorical <- data_set$alloy
+xi <- data_set$temp
+```
+
+ANOVA
+Visualize
+```{r}
+stripchart(continuous ~ categorical, vertical = TRUE, pch = 1, 
+           data = data_set)
+
+boxplot(continuous ~ categorical, data = data_set)
+```
+
+Fit the one-way CRD EFFECTS model with "reference group" constraint
+```{r}
+fit.plan <- aov(continuous ~ categorical, data = data_set)
+alt_model <- lm(continuous ~ categorical, data = data_set)
+```
+Have a look at the estimated coefficients
+```{r}
+coef(fit.plan)
+coef(alt_model)
+```
+
+View all the coefficients
+```{r}
+dummy.coef(fit.plan)
+```
+
+```{r}
+emmeans(fit.plan, specs = ~ categorical)
+```
+Change constraints to "sum to zero"
+```{r}
+options(contrasts = c("contr.sum", "contr.poly")) #for both ordered and unordered values
+fit.plan2 <- aov(continuous ~ categorical, data = data_set)
+coef(fit.plan2)
+dummy.coef(fit.plan2)
+```
+
+Generate ANOVA Table
+```{r}
+summary(fit.plan)
+```
+
+ANCOVA
+Plot the data
+```{r}
+boxplot(continuous ~ categorical, data = data_set)
+```
+
+```{r}
+fit.ancova <- aov(continuous ~ xi+categorical, data = data_set)
+summary(fit.ancova)
+```

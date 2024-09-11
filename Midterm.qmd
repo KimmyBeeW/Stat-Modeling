@@ -1,0 +1,262 @@
+```{r}
+remove(list=ls())
+
+# This is the R code to check out Midterm 1, Winter 2023.
+#
+# Problem 3
+x_bar <- (10.145-(-2.725))/2
+test_stat <- x_bar/3
+test_stat
+```
+```{r}
+##Problem 5
+critical_z <- 30+qnorm(.05)*5/sqrt(15)
+pnorm(critical_z,28.5,5/sqrt(15))
+```
+```{r}
+##Problem 6
+upper_90 <- 9.0757
+lower_90 <- 3.9243
+x_bar <-(upper_90 + lower_90)/2
+#x_bar <- 6.5
+n <- 17
+df <- n-1
+critical_t <- qt(.95,df)
+se <-(upper_90-x_bar)/critical_t
+#se <-1.4753
+me <--2*qt(.05,df)*se
+me
+lower_95 <-6.5+qt(.025,df)*se
+upper_95 <-6.5-qt(.025,df)*se
+lower_95
+upper_95
+```
+
+
+```{r}
+# Problem 7
+x_1 <- 3.9
+x_2 <- 3.7
+n_1 <- 27
+n_2 <- 34
+df_1 <- n_1-1
+df_2 <- n_2-1
+sd_1 <- 0.76
+sd_2 <- 0.51
+
+ssqr_pl <-(df_1*(sd_1^2)+df_2*(sd_2^2))/(df_1+df_2)
+t_stat <- (x_1-x_2)/sqrt(ssqr_pl*(1/n_2+1/n_1))
+t_stat
+```
+
+```{r}
+# Problem 13
+before <- c(5,9,3,8,3,4,3,8,3,7)
+after <- c(6,8,2,3,4,6,4,2,3,5)
+t.test(before,after,paired=TRUE,)
+```
+```{r}
+#  Problem 16
+sd <- 3.1
+n <- (sd^2)*(qnorm(.95)+qnorm(.80))^2
+n
+```
+```{r}
+# problem 17
+n1 <- 12
+x1 <- 12.85
+sd1 <- 2.4
+n2 <- 11
+x2 <- 14.76
+sd2 <- 3.12
+df1 <- n1-1
+df2 <- n2-1
+df <- df1 + df2
+
+ssqr_pl <-(df1*(sd1^2)+df2*(sd2^2))/(df1+df2)
+t_stat <- (x1-x2)/sqrt(ssqr_pl*(1/n2+1/n1))
+t_stat
+critical_t <- qt(.025,df,lower.tail=FALSE)
+
+lower_95 <- (x1-x2) - critical_t*sqrt(ssqr_pl*(1/n2+1/n1))
+upper_95 <- (x1-x2) + critical_t*sqrt(ssqr_pl*(1/n2+1/n1))
+
+lower_95 
+upper_95
+
+```
+
+
+```{r}
+###
+ssqr_pl <-(26*(.76^2)+33*(.51^2))/59
+upper <- (12.87-14.76)+qt(.975,21)*sqrt(ssqr_pl*(1/12+1/11))
+lower <-  (12.87-14.76)+qt(.025,21)*sqrt(ssqr_pl*(1/12+1/11))
+upper
+lower
+####
+#Problem 18, 20, 21
+ssqr_pl <-(16*7+14*5)/30
+
+t_stat <- (13-16)/sqrt(ssqr_pl*(1/17+1/15))
+t_stat
+p_value <- 2*pt(t_stat,30)
+p_value
+lower <- (13-16)+qt(0.05,30)*sqrt(ssqr_pl*(1/17+1/15))
+lower
+upper <- (13-16)-qt(0.05,30)*sqrt(ssqr_pl*(1/17+1/15))
+upper
+#
+```
+
+```{r}
+##### Problems 22 through 25
+sports <- read.csv("Gsj72Y00aavf.csv",header=TRUE)
+sports
+byu <- sports[,1]
+utah<- sports[,2]
+byu
+length(byu)
+byu <- byu[-32]
+byu <- byu[-31]
+byu
+sd(byu)
+sd(utah)
+t.test(byu,utah,paired=FALSE,var.equal=TRUE,alternative="greater")
+```
+```{r}
+# problem 23-24
+n1 <- length(byu)
+x1 <- mean(byu)
+sd1 <- sd(byu)
+n2 <- length(utah)
+x2 <- mean(utah)
+sd2 <- sd(utah)
+df1 <- n1-1
+df2 <- n2-1
+df <- df1 + df2
+
+ssqr_pl <-(df1*(sd1^2)+df2*(sd2^2))/(df1+df2)
+t_stat <- (x1-x2)/sqrt(ssqr_pl*(1/n2+1/n1))
+t_stat
+critical_t <- qt(.05,df,lower.tail=FALSE)
+
+lower_90 <- (x1-x2) - critical_t*sqrt(ssqr_pl*(1/n2+1/n1))
+upper_90 <- (x1-x2) + critical_t*sqrt(ssqr_pl*(1/n2+1/n1))
+
+lower_90 
+upper_90
+
+```
+
+
+
+```{r}
+t.test(byu,conf.level=.99,var.equal=TRUE)
+t.test(byu,conf.level=.98,var.equal=TRUE)
+t.test(byu,conf.level=.95)
+t.test(byu,conf.level=.90)
+t.test(utah,conf.level=.99)
+```
+
+```{r}
+x_bar_1 <- mean(byu)
+x_bar_1
+x_bar_2 <- mean(utah)
+x_bar_2
+n_1 <- length(byu)
+n_1
+n_2 <- length(utah)
+n_2
+sd_1 <- sd(byu)
+sd_1
+sd_2 <- sd(utah)
+sd_2
+s_pool <- ((n_1-1)*sd_1+(n_2-1)*sd_2)/(n_1+n_2-2)
+s_pool
+s_sqr_pool <- s_pool^2
+s_sqr_pool
+```
+
+```{r}
+t_stat <- (x_bar_1 - x_bar_2) / sqrt(s_sqr_pool*(1/n_1 + 1/n_2))
+t_stat
+```
+
+```{r}
+#ssqr_pl <-(16*7+14*5)/30
+t.test(byu, utah, alternative = "greater", conf.level = .9, var.equal = TRUE)
+t.test(byu, utah, alternative = "two.sided", conf.level = .9, var.equal = TRUE)
+x_bar_1 <- mean(byu)
+x_bar_2 <- mean(utah)
+n_1 <- length(byu)
+n_2 <- length(utah)
+sd_1 <- sd(byu)
+sd_2 <- sd(utah)
+df1 <- n_1-1
+df2 <- n_2-1
+df <- df1 + df2
+
+ssqr_pl <-(df1*(sd_1^2)+df2*(sd_2^2))/(df)
+t_stat <- (x_bar_1-x_bar_2)/sqrt(ssqr_pl*(1/n2+1/n1))
+t_stat
+critical_t <- qt(.005,df,lower.tail=FALSE)
+
+lower_99 <- (x_bar_1-x_bar_2) - critical_t*sqrt(ssqr_pl*(1/n_2+1/n_1))
+upper_99 <- (x_bar_1-x_bar_2) + critical_t*sqrt(ssqr_pl*(1/n_2+1/n_1))
+
+lower_99 
+upper_99
+```
+```{r}
+#t_stat <- (13-16)/sqrt(ssqr_pl*(1/17+1/15))
+t_stat
+
+#p_value <- 2*pt(t_stat,30)
+p_value
+lower <- (13-16)+qt(0.05,30)*sqrt(ssqr_pl*(1/17+1/15))
+lower
+upper <- (13-16)-qt(0.05,30)*sqrt(ssqr_pl*(1/17+1/15))
+upper
+```
+
+```{r}
+#
+#Problem 26
+n<- 1.96^2*25/4
+n
+#problem 27
+n <- 2*(1.645^2)*25/(1.5^2)
+n
+####
+
+##Problem 28
+x_bar <-(9.0757+3.9243)/2
+#x_bar <- 6.5
+critical_t <-qt(.95,16)
+se <-(9.0757-6.5)/critical_t
+#se <-1.4753
+me <--2*qt(.05,16)*se
+me
+lower <-6.5+qt(.05,16)*se
+upper <-6.5-qt(.05,16)*se
+lower
+upper
+upper-lower
+lower <-6.5+qt(.1,16)*se
+upper <-6.5-qt(.1,16)*se
+lower
+upper
+lower <-6.5+qt(.035,16)*se
+upper <-6.5-qt(.035,16)*se
+lower
+upper
+lower <-6.5+qt(.025,16)*se
+upper <-6.5-qt(.025,16)*se
+lower
+upper
+lower <-6.5+qt(.01,16)*se
+upper <-6.5-qt(.01,16)*se
+lower
+upper
+```

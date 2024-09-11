@@ -1,0 +1,40 @@
+```{r}
+library(tidyverse)
+library(car)
+library(DescTools)
+
+countries <- read_csv("http://tofu.byu.edu/stat230/countries.csv")%>%
+  mutate(region = as.factor(region))%>%
+  mutate(agriculture = as.factor(agriculture))
+countries
+```
+
+# 1
+n = 15 per group
+```{r}
+bet <- var(c(0,-4,5)) # can also be var(c(70,74,79)) or var(c(-4.333, -0.333, 4.667))
+wit <- 5^2 # can also be 5.102^2
+power.anova.test(groups=3, between.var=bet, within.var=wit, sig.level=0.05, power=.99) 
+```
+# 2
+F value for region = 37.818
+```{r}
+countries.lm1 <- lm(infmort ~ region, data = countries)
+anova(countries.lm1)
+```
+
+# 3
+p-value of Oceania-Asia of 0.1974134
+```{r}
+countries.aov <- aov(infmort ~ region, data=countries)
+TukeyHSD(countries.aov)
+```
+
+# 4
+F stat for region 24.2530
+p-val for interaction 0.2416
+```{r, warning=FALSE}
+countries.lm2 <- lm(infmort ~ region*agriculture, data=countries)
+Anova(countries.lm2, type=2)
+```
+

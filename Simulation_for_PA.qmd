@@ -1,0 +1,229 @@
+---
+title: "Simulation for P(A)"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+## Motivating Example
+
+Intro to Gaming / Gambling: Roulette
+
+Begin with a budget you are prepared to lose (`Budget`)
+
+Place the minimum bet (`MinBet`)
+
+Add winnings to amount you are prepared to lose
+
+Continue to play until you’ve lost it all
+
+Count how many turns / bets until you lost it all
+
+There are many possible bets in roulette
+
+![](Roulette%20Bets.png)
+
+**Line Bet**
+
+-   Pays 5 : 1
+
+-   Called “Line” because you put your chips between two sets of values
+
+Assume you have a \$100 Gaming Budget and the Minimum Bet is \$25
+
+P(Lose quickly) = P(Lose first 4 bets) = (1-6/38)\*(1-6/38)\*(1-6/38)\*(1-6/38) = 0.5028813
+
+## Approximating Probability by Simulation
+
+Thinking statistically, we could approximate this probability by gathering the data from people playing exactly this game in exactly this way
+
+Need a big sample size (actually, the bigger the sample size the more precise the proportion is for the “true probability”)
+
+Instead of asking people to do this, we can “simulate” the data we’d get if we did
+
+Theoretically,
+
+![](P(A).png)
+
+Simulation Code needs to
+
+-   perform experiment and determine if Event A occurs
+
+-   repeat many times (in a `for` loop)
+
+R code to simulate playing roulette
+
+```{r}
+# "spin" the roulette wheel 1-36 with 0 and 00 (00 will be -1)
+outcome <- sample(-1 : 36, 1)
+outcome
+
+# did we win? If so, we get 5 : 1 payoff
+# note: this is a specific line bet 
+#       (would the probability change if we chose a different line?)
+ifelse(outcome >= 7 & outcome <= 12, 125, -25)
+```
+
+R code to play until you lose all your gaming budget
+
+```{r}
+howlong <- function(Budget, MinBet){
+
+  plays <- 0
+    
+  while(Budget - MinBet >= 0){
+
+    # "spin" the roulette wheel 1-36 with 0 and 00 (00 will be -1)
+    outcome <- sample(-1 : 36, 1)
+    plays <- plays + 1
+
+    # did we win?
+    payoff <- ifelse(outcome >= 7 & outcome <= 12, 5 * MinBet, - MinBet)
+
+    # update Stake
+    Budget <- Budget + payoff
+
+  }
+
+  # game over
+  plays
+}
+```
+
+```{r}
+howlong(Budget = 100, MinBet = 25)
+```
+
+To get a better approximation, we would need to simulate more players
+
+Remember the “Law of Large Numbers” from Stat 121?
+
+Approximate P(lose quickly) with a simulation study of 10,000 players
+
+```{r}
+# define player behavior
+Budget <- 100
+MinBet <- 25
+
+# simulate the number of plays
+Nsim <- 10^5
+set.seed(2112)
+number_plays <- rep(0, Nsim)
+for(i in 1 : Nsim){
+  number_plays[i] <- howlong(Budget, MinBet)
+}
+
+# compute approx P(lose quickly)
+mean(number_plays == 4)
+```
+
+```{r}
+# simulated players
+head(number_plays, 15)
+```
+
+```{r}
+# compute approx P(lose quickly)
+mean(number_plays == 4)
+```
+
+Close to “true probability” 0.5028813
+
+Can use the simulated players in `number_plays` to approximate other probabilities (easy to code, hard to derive theoretically)
+
+P(playing all night)
+
+Each bet and spin of the roulette wheel takes about 5 min, so 12 hours playing is 12 \* 12 = 144 plays
+
+```{r}
+# compute approx P(play all night)
+mean(number_plays >= 144)
+```
+
+Stockton asked: So there’s 19 of us in our family, and we all have a birthday in each of the twelve months. What the probability is of that occurring.
+
+```{r}
+# each of 19 have equal prob of birth month (1 = Jan, ... , 12 = Dec)
+outcome <- sample(1 : 12, 19, replace = TRUE)
+outcome
+
+# someone in each month?
+ifelse(length(unique(outcome)) == 12, TRUE, FALSE)
+```
+
+```{r}
+# repeat for many simulated families of 19
+Nsim <- 750
+set.seed(2319)
+all_families <- rep(0, Nsim)
+for(i in 1 : Nsim){
+  # each of 19 have equal prob of birth month (1 = Jan, ... , 12 = Dec)
+  outcome <- sample(1 : 12, 19, replace = TRUE)
+
+  # someone in each month?
+  all_families[i] <- ifelse(length(unique(outcome)) == 12, TRUE, FALSE)
+}
+head(all_families)
+```
+
+```{r}
+mean(all_families)
+```
+
+P(all 19 have same birth month)
+
+```{r}
+Nsim <- 750
+set.seed(2319)
+all_families <- rep(0, Nsim)
+for(i in 1 : Nsim){
+  # each of 19 have equal prob of birth month (1 = Jan, ... , 12 = Dec)
+  outcome <- sample(1 : 12, 19, replace = TRUE)
+
+  # all in same month?
+  all_families[i] <- ifelse(length(unique(outcome)) == 1, TRUE, FALSE)
+}
+head(all_families)
+mean(all_families)
+```
+
+P(at least one person born in August)
+
+```{r}
+Nsim <- 750
+set.seed(2319)
+all_families <- rep(0, Nsim)
+for(i in 1 : Nsim){
+  # each of 19 have equal prob of birth month (1 = Jan, ... , 12 = Dec)
+  outcome <- sample(1 : 12, 19, replace = TRUE)
+
+  # at least one in august
+  all_families[i] <- ifelse(8 %in% outcome, TRUE, FALSE)
+}
+head(all_families)
+mean(all_families)
+```
+
+P(all months) when
+
+![](Month_Probabilities.png)
+
+```{r}
+Nsim <- 750
+set.seed(2319)
+all_families <- rep(0, Nsim)
+
+# probabilities for each month are different: Jan 0.08, Feb 0.07, Mar 0.08, Apr 0.08, May 0.09, Jun 0.09, Jul 0.09, Aug 0.09, Sep 0.08, Oct 0.09, Nov 0.08, Dec 0.08
+probabilities <- c(0.08, 0.07, 0.08, 0.08, 0.09, 0.09, 0.09, 0.09, 0.08, 0.09, 0.08, 0.08)
+
+for(i in 1 : Nsim){
+  # each of 19 have probability of birth month (1 = Jan, ... , 12 = Dec)
+  outcome <- sample(1 : 12, 19, replace = TRUE, prob = probabilities)
+
+  # someone in each month?
+  all_families[i] <- ifelse(length(unique(outcome)) == 12, TRUE, FALSE)
+}
+head(all_families)
+mean(all_families)
+```

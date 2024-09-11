@@ -1,0 +1,39 @@
+---
+title: "Stat 230 HW#10"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+# Problems #70-73
+
+Load libraries:
+
+```{r, message=FALSE}
+library(tidyverse)
+library(car) # So we can calculate Type II and Type III sums of squares
+library(DescTools)
+library(multcomp)
+library(MASS) # needed to make a function
+```
+
+## 70
+
+## 73
+
+```{r}
+marketing <- read_table("../data/marketing.txt", col_names = c("Sales", "Shelf", "Day")) %>%
+  mutate(Day = as.factor(Day)) %>%
+  mutate(Shelf = as.factor(Shelf))  # marketing$Day <- as.factor(marketing$Day)
+```
+
+```{r}
+# CB[1]  # part c
+marketing.lm <- lm(Sales ~ Day+Shelf, data = marketing)
+anova(marketing.lm)
+
+# BF[1]  # part d
+marketing.lm1 <- lm(Sales ~ Shelf, data = marketing)
+anova(marketing.lm1)
+```

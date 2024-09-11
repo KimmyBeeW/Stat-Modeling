@@ -1,0 +1,71 @@
+Q 11
+
+```{r}
+qnorm(0.995)^2 / 
+```
+
+```{r}
+power.t.test(power=.8,sig.level=.01, delta=2, sd=3, type="one.sample", alternative="one.sided")
+```
+
+Q 12 a)
+
+```{r}
+A <- c(11.56, 9.16, 10.81, 11.35, 6.04, 8.6, 9.72, 12.26)
+B <- c(16.41, 18.52, 14.13, 12.49, 16.29, 14.54, 14.60, 15.79)
+n1 <- 8
+n2 <- 8
+s1 <- sd(A)
+s2 <- sd(B)
+pooled_var <- ((n1 - 1)*(s1^2) + (n2 - 1)*(s2^2))/(n1+n2 - 2)
+pooled_var
+z <- qnorm(0.975)
+z
+n <- 2*((z)^2)*(pooled_var)/(1)
+n
+```
+
+b)  
+
+```{r}
+power.t.test(n = NULL, delta = 1, sd = sqrt(pooled_var), sig.level = 0.05, power = 0.9, type = "two.sample", alternative = "one.sided")
+```
+
+Q 13
+
+```{r}
+Karlsruhe <- c(1.186, 1.151, 1.322, 1.339, 1.200, 1.402, 1.365, 1.537, 1.559)
+Lehigh <- c(1.061, 0.992, 1.063, 1.062, 1.065, 1.178, 1.037, 1.086, 1.052)
+
+t.test(Karlsruhe, Lehigh, "two.sided", paired = T)
+```
+
+Q 14
+
+```{r}
+before <- c(10,3,4,8,8,9,5,7,1,7)
+after <- c(8,4,2,5,7,8,4,5,2,5)
+t.test(before,after,paired=T,conf.level=.95)
+```
+
+```{r}
+d <- c(2,(-1),2,3,1,1,1,2,(-1),2)
+d_ <- mean(d)
+t_star <- qt(0.975, 9)
+
+lowC <- d_ - t_star*sd(d)/sqrt(10)
+highC <- d_ + t_star*sd(d)/sqrt(10)
+lowC
+highC
+
+Before <- c(10,3,4,8,8,9,5,7,1,7)
+After <- c(8,4,2,5,7,8,4,5,2,5)
+t.test(Before, After, paired = T, "two.sided")
+t.test(Before, After, paired = F, "two.sided", var.equal = T)
+```
+check
+```{r}
+Girders <- c(1.186-1.061, 1.151-.992, 1.322-1.063, 1.339-1.062, 1.200-1.065, 1.402-1.178, 1.365-1.037, 1.537-1.086, 1.559-1.052)
+t.test(Girders)
+```
+

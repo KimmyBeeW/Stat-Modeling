@@ -1,0 +1,221 @@
+---
+title: "Stat 230 HW#7"
+author: "Kimberly Williams"
+date: "`r Sys.Date()`"
+format: pdf
+editor: visual
+---
+
+# Numbers 56-60
+
+# Number 56
+
+D21 on p. 180. Instead of calculating critical values, instead use your F-statistic for “Conditions” to calculate a p-value using R.
+
+![](21.png){fig-align="left"}
+
+```{r}
+
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+apps <- read_csv("/Users/kimberlywilliams/Documents/BYU_Wint24/Stat230TA/data/AppleStore.csv")
+```
+
+```{r}
+apps$cont_rating <- as.factor(apps$cont_rating)
+apps$cont_rating <- as.factor(apps$cont_rating)
+apps$prime_genre <- as.factor(apps$prime_genre)
+head(apps)
+```
+
+# Number 57
+
+(a) What percent of apps are free in each of the cont_rating groups (i.e., the age content ratings)? Sort the list by these percentages by the size of the cont_rating groups (largest to smallest)?
+
+```{r}
+apps %>% 
+  group_by(cont_rating) %>%
+  summarize(percentfree = 100*mean(price == 0), ngroup = n()) %>%
+  arrange(desc(ngroup))
+
+
+# OR #
+apps %>% 
+  add_count(cont_rating,name="nn") %>% 
+  group_by(cont_rating) %>%
+  summarize(percentfree = 100*mean(price == 0), ngroup = mean(nn)) %>%
+  arrange(desc(ngroup))
+```
+
+(b) Give side-by-side histograms for the user_rating distribution of apps for each of the cont_rating groups.
+
+```{r}
+apps %>% 
+  group_by(cont_rating) %>%
+  ggplot(mapping=aes(x=user_rating)) +
+    geom_histogram(binwidth=0.5,center=5.0) +
+    facet_grid(. ~ cont_rating) +
+    labs(
+      y = "Number of apps",
+      x = "User Rating",
+      title = "User Ratings for each Content Rating Group"
+    )
+```
+
+(c) Give side-by-side histograms for the size_bites distribution of apps for each of the top 8 most common prime_genre groups. Recreate the same plot for the log(size_bytes) distribution. Which is more promising as a response variable for ANOVA: size_bytes or log(size_bytes)?
+
+```{r}
+apps %>% 
+  add_count(prime_genre,name="nn") %>%  
+  filter(dense_rank(-nn) <= 8) %>%
+  group_by(prime_genre) %>%       #vvv adds some color for FUN
+  ggplot(mapping=aes(x=size_bytes, fill = prime_genre)) +
+  geom_histogram(bins=20) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + # theme is just extra stuff if you want
+  facet_grid(. ~ prime_genre) +
+  labs(
+    y = "Number of apps",
+    x = "Size of bytes",
+    title = "Size of bytes for Top 8 Genres",
+    fill = "Genre"
+    )              # labs are more extra stuff for fun
+
+apps %>% 
+  add_count(prime_genre,name="nn") %>%  
+  filter(dense_rank(-nn) <= 8) %>%
+  #  mutate(logsizebytes=log(size_bytes)) %>%
+  group_by(prime_genre) %>%             #vvv adds some color for FUN
+  ggplot(mapping=aes(x=log(size_bytes), fill = prime_genre)) + #  ggplot(mapping=aes(x=logsizebytes)) +
+  geom_histogram(bins=20) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + # this is just extra stuff if you want
+  facet_grid(. ~ prime_genre) +
+  labs(
+    y = "Number of apps",
+    x = "Log transformed Size of bytes",
+    title = "Log transformed Size of bytes for Top 8 Genres",
+    fill = "Genre"
+    )              # labs are more extra stuff for fun
+
+# apps %>% 
+#   group_by(cont_rating) %>%
+#   ggplot(mapping=aes(x=user_rating)) +
+#   stat_count(mapping = aes(x=user_rating, y=100*(..prop..) )) +
+#   #geom_histogram(binwidth=0.5,center=5.0,aes(y = 100*(..count..)/sum(..count..))) +
+#   facet_grid(. ~ cont_rating) #+
+#   ylab("percent") + scale_y_continuous(labels = percent_format())
+```
+
+#Problem 58 Check w/ R
+
+```{r}
+dat <- read_csv("/Users/kimberlywilliams/Documents/BYU_Wint24/Stat230TA/data/BF1practice.csv")
+newdat <- dat %>% pivot_longer(c(A,B,C,D),names_to="drug",values_to="score")
+newdat
+```
+
+```{r}
+lm58 <- lm(score ~ drug, data=newdat)
+summary(lm58)
+anova(lm58)
+```
+
+Calculate by hand:
+
+```{r}
+A <- c(25, 24, 29, 19, 28)
+B <- c(31, 22, 25, 31, 36)
+C <- c(32, 28, 38, 35, 32)
+D <- c(39, 40, 32, 34, 40)
+
+mean(A)
+mean(B)
+mean(C)
+mean(D)
+print('Grand Mean:')
+mean(c(A, B, C, D))
+```
+
+ssmean
+
+```{r}
+(31^2)*20
+```
+
+ssdrug
+
+```{r}
+5*(25-31)^2 + 5*(29-31)^2 + 5*(33-31)^2 + 5*(37-31)^2
+```
+
+ssresiduals
+
+```{r}
+(25-25)^2 + (24-25)^2 + (29-25)^2 + (28-25)^2 + (19-25)^2 + 
+  (31-29)^2 + (22-29)^2 + (25-29)^2 + (31-29)^2 + (36-29)^2 + 
+  (32-33)^2 + (28-33)^2 + (38-33)^2 + (35-33)^2 + (32-33)^2 + 
+  (39-37)^2 + (40-37)^2 + (32-37)^2 + (34-37)^2 + (40-37)^2
+```
+
+# Number 59
+
+a)  table of means
+
+```{r}
+cancer <- read.table("cancer.txt",header=TRUE)
+cancer$type <- as.factor(cancer$type)
+cancer$gender <- as.factor(cancer$gender)
+logsurv <- log(cancer$days)
+tapply(logsurv,cancer$type,mean)
+```
+
+b)  Test the hypothesis --\> H0: All cancer types have the same mean log-survival time. Give the ANOVA table. Interpret the F statistic and p-value and then make a conclusion.
+
+```{r}
+logsurv.lm <- lm(logsurv ~ cancer$type)
+anova(logsurv.lm)
+```
+
+ANOVA table shows that mean survival time in days is not the same for at least two cancer types, and the difference is significant.
+
+c)  Use the group means or difference in means from the output, along with the MSE from the ANOVA table, to calculate (by hand) the confidence interval for μkidney − μstomach.
+
+```{r}
+summary(cancer$type) # get the counts of levels in type
+```
+
+```{r}
+dif <- 6.087795 - 4.817299 # difference in means kidney - stomach
+v <- sum(c(5,16,16,7,7,12))-6 # df for error
+tstar <- qt(0.975, v)        # t_star for tα/2,v
+MSE <- 1.1366             # mean square of the residual error pulled from the anova table
+nk <- 7               # n kidney
+ns <- 12              # n stomach
+
+print(cbind(dif, v, tstar, MSE, nk, ns))
+print("")
+
+print("Confidence Interval")
+upper <- dif + tstar*sqrt((1/nk+1/ns)*MSE)
+lower <- dif - tstar*sqrt((1/nk+1/ns)*MSE)
+print(cbind(lower, upper))
+```
+
+# Number 60
+
+Using your EDA work from number 57(c), carry out an ANOVA comparing the means of log(size_bytes) for each of the top 8 prime_genres of apps. Give a complete ANOVA table and write a summary paragraph describing your findings. (Make sure you discuss the p-value for the F test and describe how practically important/useful the genre is for understanding differences in app size. As always, give all code.
+
+```{r}
+apps8 <- apps %>% 
+  add_count(prime_genre,name="nn") %>%  
+  filter(dense_rank(-nn) <= 8) %>%
+  select(prime_genre,size_bytes)
+
+apps8.lm <- lm(log(size_bytes) ~ prime_genre , data=apps8)
+summary(apps8.lm)
+anova(apps8.lm)
+```

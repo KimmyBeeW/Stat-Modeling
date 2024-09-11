@@ -1,0 +1,55 @@
+```{r}
+library(ggplot2)
+```
+
+## Normal Distribution
+base R
+```{r}
+boxplot(rnorm(100, mean=1, sd = 1), rnorm(100, mean = 0, sd = 1), rnorm(100, mean=0, sd=2))
+```
+GGplot
+```{r}
+# Generate random normal data
+set.seed(123)  # For reproducibility
+data <- data.frame(
+  Group = rep(c("Group 1", "Group 2", "Group 3"), each = 20),
+  Value = c(rnorm(20, mean = 1, sd = 1),
+            rnorm(20, mean = 0, sd = 1),
+            rnorm(20, mean = 0, sd = 2))
+)
+
+ggplot(data, aes(x = Group, y = Value)) +
+  geom_boxplot()
+```
+
+What does it mean to get "another sample" in our confidence intervals?
+Data: Sample of BYU Creamery Chocolate Milk Bottles
+```{r}
+choc <- c(16.1308, 16.0294, 16.1459, 16.1009, 15.9948, 16.1127)
+# Another Sample doesn't mean go get more bottles, it means another sample from a Normal(16, 0.01)
+sample2 <- rnorm(6, mean = 16, sd = sqrt(0.01))
+sample2
+```
+
+
+## Bernoulli(p)
+```{r}
+simdata_Bern <- rbinom(n=40, size = 1, p = 0.8)
+simdata_Bern
+```
+```{r}
+ggplot(data=simdata_Bern) +
+  geom_bar
+```
+
+
+
+## Binomial(n,p)
+
+
+
+## Poisson(λ)
+
+
+
+
